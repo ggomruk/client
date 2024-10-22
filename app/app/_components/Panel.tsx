@@ -67,46 +67,48 @@ const Panel = () => {
     };
 
     return (
-        <div className="flex flex-row h-full items-center text-white text-base m-6 mb-0 border-solid border border-opacity-70 border-gray-500 rounded-xl shadow bg-primary-container-dark">
-            <div className="m-6 flex flex-col items-center justify-center">
-                <div className="flex items-center">
-                    <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center mr-2.5 ">
-                        <Image src={`./images/${symbol.slice(0, -4).toLocaleLowerCase()}.svg`} width={20} height={20} alt='Symbol Icon' className="w-6 h-6" />
-                    </div>
-                    <div className="flex flex-col mx-2">
-                        <span className="font-bold text-white text-lg">{`${symbol.toUpperCase().slice(0, -4)}${symbol.toUpperCase().slice(-4)}`}</span>
-                        <span className="text-gray-400 text-sm mt-1 underline">{CRYPTO_SYMBOLS[symbol.slice(0, -4).toUpperCase() as keyof typeof CRYPTO_SYMBOLS] ?? "NA"}</span>
-                    </div>
-                    <button className="text-primary h-full w-5" onClick={toggleDropDown}>
-                        <FontAwesomeIcon className="text-yellow-500" icon={faArrowCircleDown} />
-                    </button>
-                    {dropdownOpen && (
-                        <div className="absolute top-full left-0 z-10 rounded-lg border border-gray-300 shadow-lg h-96 w-80 bg-gray-800 opacity-0 transform -translate-y-2 animate-dropdownFadeIn flex flex-col box-border">
-                            <div className="relative flex items-center justify-center">
-                                <FontAwesomeIcon icon={faSearch} className="absolute top-1/2 left-10 transform -translate-y-1/2" />
-                                <input
-                                    type="text"
-                                    placeholder="Search"
-                                    value={searchContent}
-                                    onChange={handleInputChange}
-                                    className="bg-transparent w-full h-10 m-4 rounded-full border border-gray-300 box-border px-10"
-                                />
-                                <FontAwesomeIcon icon={faXmark} className="absolute top-1/2 right-10 transform -translate-y-1/2" onClick={resetSearchContent} />
-                            </div>
-                            <hr className="border-none h-px bg-gray-500 w-full" />
-                            <div className="flex-1 overflow-y-auto">
-                                {Object.keys(CRYPTO_SYMBOLS).map((s, index) => (
-                                    <div key={index} className="p-2.5 h-12 cursor-pointer flex items-center hover:bg-gray-700" onClick={() => {
-                                        setSymbol(`${s}USDT`);
-                                        setDropdownOpen(false);
-                                    }}>
-                                        {`${s}USDT`}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+        <div className="w-full flex flex-row items-center text-white text-base mt-6 mb-0 border-solid border border-opacity-70 border-gray-500 rounded-xl shadow bg-primary-container-dark">
+            <div className="m-6 flex items-center justify-center">
+
+                <div className="bg-gray-200 rounded-full w-12 h-12 flex items-center justify-center mr-2.5 ">
+                    <Image src={`./images/${symbol.slice(0, -4).toLocaleLowerCase()}.svg`} width={30} height={30} alt='Symbol Icon' className="w-8 h-8" />
                 </div>
+
+                <div className="flex flex-col mx-2">
+                    <span className="font-bold text-white text-lg">{`${symbol.toUpperCase().slice(0, -4)}${symbol.toUpperCase().slice(-4)}`}</span>
+                    <span className="text-gray-400 text-sm mt-1 underline">{CRYPTO_SYMBOLS[symbol.slice(0, -4).toUpperCase() as keyof typeof CRYPTO_SYMBOLS] ?? "NA"}</span>
+                </div>
+
+                <button className="text-primary h-6 w-6" onClick={toggleDropDown}>
+                    <FontAwesomeIcon fixedWidth className="text-yellow-500" icon={faArrowCircleDown} />
+                </button>
+
+                {dropdownOpen && (
+                    <div className="absolute top-full left-0 z-10 rounded-lg border border-gray-300 shadow-lg h-96 w-80 bg-gray-800 opacity-0 transform -translate-y-2 animate-dropdownFadeIn flex flex-col box-border">
+                        <div className="relative flex items-center justify-center">
+                            <FontAwesomeIcon icon={faSearch} className="absolute top-1/2 left-10 transform -translate-y-1/2" />
+                            <input
+                                type="text"
+                                placeholder="Search"
+                                value={searchContent}
+                                onChange={handleInputChange}
+                                className="bg-transparent w-full h-10 m-4 rounded-full border border-gray-300 box-border px-10"
+                            />
+                            <FontAwesomeIcon icon={faXmark} className="absolute top-1/2 right-10 transform -translate-y-1/2" onClick={resetSearchContent} />
+                        </div>
+                        <hr className="border-none h-px bg-gray-500 w-full" />
+                        <div className="flex-1 overflow-y-auto">
+                            {Object.keys(CRYPTO_SYMBOLS).map((s, index) => (
+                                <div key={index} className="p-2.5 h-12 cursor-pointer flex items-center hover:bg-gray-700" onClick={() => {
+                                    setSymbol(`${s}USDT`);
+                                    setDropdownOpen(false);
+                                }}>
+                                    {`${s}USDT`}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Current Price */}

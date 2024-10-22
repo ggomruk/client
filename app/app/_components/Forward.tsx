@@ -44,7 +44,7 @@ const Forward = () => {
     };
 
     return (
-        <div className="flex flex-col mr-8 p-3 text-white border border-solid border-opacity-70 border-gray-500 rounded-xl shadow w-1/4 bg-primary-container-dark">
+        <div className="mr-8 p-3 text-white border border-solid border-opacity-70 border-gray-500 rounded-xl shadow w-1/3 bg-primary-container-dark">
             <div className='px-2'>
                 <div className='text-2xl pb-2'>Signal</div>
 

@@ -10,12 +10,14 @@ import History from './_components/History'
 const AppPage = () => {
     return (
         <WebsocketProvider>
-            <Panel />
-            <FinancialChart />
-            <div className="m-6 mb-0 py-3 flex">
-                <Backtest />
-                <Forward />
-                <History />
+            <div className='mx-6'>
+                <Panel />
+                <FinancialChart />
+                <div className="h-full mt-6 mb-0 py-3 flex">
+                    <Backtest />
+                    <Forward />
+                    <History />
+                </div>
             </div>
         </WebsocketProvider>
     )
