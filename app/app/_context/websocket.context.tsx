@@ -1,4 +1,5 @@
 'use client';
+import axios from "axios";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react"
 
 interface IKlineData {
@@ -38,9 +39,60 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     const [klineData, setKlineData] = useState<IKlineData[]>([]);
     const [symbolData, setSymbolData] = useState<ISymbolData | null>(null);
     const [symbol, setSymbol] = useState<string>('BTCUSDT');
+    const [isHistoryDataFetched, setisHistoryDataFetched] = useState(false);
     const websocketRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
+        const historyData : IKlineData[] = [];
+        const fetchData = async () => {
+            // Get initial data
+            let startTime = new Date(new Date().getFullYear(), new Date().getMonth(), 14).getTime();
+            const endTime = new Date().getTime();
+            const interval = "1m";
+            
+            while(true) {
+                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${startTime}&endTime=${endTime}&limit=1500`;
+                try {
+                    const response = await axios.get(url)
+                    const status = response.status; // HTTP Response code
+                    if (status === 429 || status === 418) {
+                        const weightUsed = response.headers["x-mbx-used-weight"];
+                        console.log(`Rate limit exceeded: ${weightUsed}`);
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        continue;
+                    } else {
+                        const data = response.data;
+                        const d = data.map((item) => ({
+                            open: parseFloat(item[1]),
+                            high: parseFloat(item[2]),
+                            low: parseFloat(item[3]),
+                            close: parseFloat(item[4]),
+                            time: item[6] / 1000,
+                        }))
+                        historyData.push(...d);
+
+                        const lastDataCloseTime = d[d.length - 1]['time'];
+                        
+                        if(lastDataCloseTime < endTime) {
+                            startTime = lastDataCloseTime * 1000;
+                        } else {
+                            break
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching data: ", error);
+                    break
+                }
+            }
+            setKlineData(historyData);
+            setisHistoryDataFetched(true);
+        }
+
+        fetchData();
+    }, [symbol])
+
+    useEffect(() => {
+        if(!isHistoryDataFetched) return;
         function connectWebsocket(onMessage: (event: MessageEvent) => void) {
             const websocketUrl = `wss://stream.binance.com:9443/ws`;
             const ws = new WebSocket(websocketUrl);
@@ -84,8 +136,15 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                     time: data.k.T / 1000,
                 };
                 setKlineData((prevData) => {
-                    const newData = [...prevData, d];
-                    return newData.length > 100 ? newData.slice(newData.length - 100) : newData;
+                    // check if the last data in prevData has the same time as the time of new data
+                    if (prevData.length && prevData[prevData.length - 1].time === d.time) {
+                        // replace the last data with the new data using spread operator 
+                        // Get all data except the last data
+                        const oldData = prevData.slice(0, prevData.length - 1);
+                        const newData = [...oldData, d];
+                        return newData;
+                    }
+                    return [...prevData, d];
                 });
             } else if (data.e === "24hrTicker") {
                 setSymbolData({
@@ -109,9 +168,10 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
             websocketRef.current = null;
             setKlineData([]);
             setSymbolData(null);
+            setisHistoryDataFetched(false);
         }
 
-    }, [symbol]);
+    }, [symbol, isHistoryDataFetched]);
 
     return (
         <WebSocketContext.Provider value={{ klineData, symbolData, symbol, setSymbol }}>
