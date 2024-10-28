@@ -14,7 +14,7 @@ const History = () => {
                     <div>History list</div>
                 ) : (
                     <div className="px-2 h-full flex flex-col justify-center items-center">
-                        <FontAwesomeIcon icon={faTimesCircle} size="4x" className="mb-2 text-red-500" />
+                        <FontAwesomeIcon icon={faTimesCircle} className="mb-2 text-red-500 h-16 w-16" />
                         <div>No records</div>
                     </div>
                 )}
