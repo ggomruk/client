@@ -14,14 +14,13 @@ const FinancialChart = () => {
     useEffect(() => {
         if (chartRef.current) return;
     
-        // returns IChartAPI instance
         const handleResize = () => {
             chart.applyOptions({ width: chartContainerRef.current?.clientWidth });
         };
 
         const chart = createChart(chartContainerRef.current!, {
             width: chartContainerRef.current?.clientWidth,
-            height: 400,
+            height: chartContainerRef.current?.clientHeight,
 
             crosshair: {
                 mode: CrosshairMode.Normal,
@@ -62,7 +61,6 @@ const FinancialChart = () => {
     }, [])
 
     useEffect(() => {
-        console.log(klineData)
         if (klineData.length > 0) {
             // seriesRef.current?.update(klineData[klineData.length - 1] as CandlestickData);
             seriesRef.current?.setData(klineData as CandlestickData[]);
@@ -70,8 +68,8 @@ const FinancialChart = () => {
     }, [klineData]);
 
     return (
-        <div className="mt-6 mb-0 py-3 border-solid border-gray-500 border-opacity-70 border rounded-xl bg-primary-container-dark">
-            <div className="m-6" ref={chartContainerRef} />
+        <div className="mt-6 mb-0 py-3 border-solid border-gray-500 border-opacity-70 border rounded-xl w-full bg-primary-container-dark">
+            <div className="m-6 h-96" ref={chartContainerRef} />
         </div>
     )
 }
