@@ -6,8 +6,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useCallback, useEffect, useRef } from 'react';
 import CRYPTO_SYMBOLS from '../_constants/crypto';
 import Image from 'next/image';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
 
 const Panel = () => {
     const { symbolData, symbol, setSymbol } = useWebsocket();
@@ -70,7 +68,7 @@ const Panel = () => {
         <div className="w-full flex flex-row items-center text-white text-base mt-6 mb-0 border-solid border border-opacity-70 border-gray-500 rounded-xl shadow bg-primary-container-dark">
             <div className="m-6 flex items-center justify-center">
 
-                <div className="bg-gray-200 rounded-full w-12 h-12 flex items-center justify-center mr-2.5 ">
+                <div className="bg-white rounded-full w-12 h-12 flex items-center justify-center mr-2.5 ">
                     <Image src={`./images/${symbol.slice(0, -4).toLocaleLowerCase()}.svg`} width={30} height={30} alt='Symbol Icon' className="w-8 h-8" />
                 </div>
 
@@ -119,7 +117,10 @@ const Panel = () => {
                         {currentPrice.toFixed(2)}
                     </span>
                 ) : (
-                    <Skeleton width='90px' height="1.2rem" baseColor="rgb(241 237 237)" />
+                    // <Skeleton width='90px' height="1.2rem" baseColor="rgb(255,255,255)" style={{opacity: 0.1}} />
+                    <div role="status" className="max-w-sm animate-pulse">
+                        <div className="h-5 bg-white rounded-md dark:bg-gray-300 w-16"></div>
+                    </div>
                 )}
             </div>
 
@@ -131,7 +132,9 @@ const Panel = () => {
                         {symbolData?.priceChange.toFixed(2) ?? 0}
                     </span>
                 ) : (
-                    <Skeleton width='90px' height="1.2rem" baseColor="rgb(241 237 237)" />
+                    <div role="status" className="max-w-sm animate-pulse">
+                        <div className="h-5 bg-white rounded-md dark:bg-gray-300 w-16"></div>
+                    </div>
                 )}
             </div>
 
@@ -143,7 +146,9 @@ const Panel = () => {
                         {symbolData?.priceChangePercent.toFixed(2)}%
                     </span>
                 ) : (
-                    <Skeleton width='90px' height="1.2rem" baseColor="rgb(241 237 237)" />
+                    <div role="status" className="max-w-sm animate-pulse">
+                        <div className="h-5 bg-white rounded-md dark:bg-gray-300 w-16"></div>
+                    </div>
                 )}
             </div>
 
@@ -153,7 +158,9 @@ const Panel = () => {
                 {symbolData !== null ? (
                     <span className="text-white">{symbolData.highPrice.toFixed(2)}</span>
                 ) : (
-                    <Skeleton width='90px' height="1.2rem" baseColor="rgb(241 237 237)" />
+                    <div role="status" className="max-w-sm animate-pulse">
+                        <div className="h-5 bg-white rounded-md dark:bg-gray-300 w-16"></div>
+                    </div>
                 )}
             </div>
 
@@ -163,7 +170,9 @@ const Panel = () => {
                 {symbolData !== null ? (
                     <span className="text-white">{symbolData.lowPrice.toFixed(2)}</span>
                 ) : (
-                    <Skeleton width='90px' height="1.2rem" baseColor="rgb(241 237 237)" />
+                    <div role="status" className="max-w-sm animate-pulse">
+                        <div className="h-5 bg-white rounded-md dark:bg-gray-300 w-16"></div>
+                    </div>
                 )}
             </div>
 
@@ -173,7 +182,9 @@ const Panel = () => {
                 {symbolData !== null ? (
                     <span className="text-white">{symbolData.quantity.toFixed(2)}</span>
                 ) : (
-                    <Skeleton width='90px' height="1.2rem" baseColor="rgb(241 237 237)" />
+                    <div role="status" className="max-w-sm animate-pulse">
+                        <div className="h-5 bg-white rounded-md dark:bg-gray-300 w-16"></div>
+                    </div>
                 )}
             </div>
         </div>

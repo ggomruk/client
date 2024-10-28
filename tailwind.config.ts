@@ -8,6 +8,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        base: "16px",
+        sm: "14px",
+        lg: "18px",
+        xl: "20px",
+        "2xl": "24px",
+        "3xl": "30px",
+        "4xl": "36px",
+        "5xl": "48px",
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

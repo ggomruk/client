@@ -5,14 +5,13 @@ import { UserStrategy } from '../_type/startegy';
 
 const Backtest = () => {
     const [symbol, setSymbol] = useState('BTCUSDT');
-    const [quantity, setQuantity] = useState(0);
+    const [quantity, setQuantity] = useState<number>(0);
     const [interval, setInterval] = useState<number>(1);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [showStrategyDetails, setShowStrategyDetails] = useState(false);
 
     const [strategy, setStrategy] = useState<UserStrategy|null>(null);
-    // const [strategy, setStrategy] = useState<string|null>(null);
-    // const [strategyParams, setStrategyParams] = useState<{[key: string]:number}>({});
     
     const [focusState, setFocusState] = useState<{ [key: string]: boolean }>({});
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,14 +44,14 @@ const Backtest = () => {
     };
 
     return (
-        <div className="mr-8 p-3 text-white border border-solid border-opacity-70 border-gray-500 rounded-xl shadow w-1/3 bg-primary-container-dark">
+        <div className="mr-8 p-5 text-white border border-solid border-opacity-70 border-gray-500 rounded-xl shadow w-1/4 bg-primary-container-dark">
             <div className='px-2'>
-                <div className='text-2xl pb-2'>Backtest</div>
+                <div className='text-3xl py-3'>Backtest</div>
 
-                {/* Quantity */}
-                <div className='flex flex-row'>
-                    <div className={`w-full rounded-full border ${focusState.quantity ? 'border-white' : 'border-gray-400'} my-3 bg-primary-container`}>
-                        <span className="p-3 flex items-center">
+                <div className="flex flex-col items-end">
+                    {/* Quantity */}
+                    <div className={`h-12 my-3 flex flex-col justify-center w-full rounded-lg border ${focusState.quantity ? 'border-white' : 'border-gray-400'} bg-primary-container`}>
+                        <div className="p-3 flex items-center">
                             <span>Quantity</span>
                             <input
                                 className="bg-transparent mx-2 text-right focus:outline-none w-full no-spinners"
@@ -64,47 +63,44 @@ const Backtest = () => {
                                 onBlur={() => handleBlur('quantity')}
                             />
                             <span>USDT</span>
-                        </span>
+                        </div>
                     </div>
-                </div>
-
-                {/* Interval */}
-                <div className='flex flex-row'>
-                    <div className={`w-full rounded-full border ${focusState.interval ? 'border-white' : 'border-gray-400'} my-3 bg-primary-container`}>
-                        <span className="p-3 flex items-center">
+                    {/* Interval */}
+                    <div className={`h-12 my-3 flex flex-col justify-center w-full rounded-lg border ${focusState.interval ? 'border-white' : 'border-gray-400'} bg-primary-container`}>
+                        <div className="p-3 flex items-center">
                             <span>Interval</span>
                             <input
+                                className="bg-transparent mx-2 text-right focus:outline-none w-full no-spinners"
                                 type="number"
                                 value={interval}
                                 min="0"
                                 onChange={(e) => setInterval(Number(e.target.value))}
-                                className="bg-transparent mx-2 text-right focus:outline-none w-full no-spinners"
                                 onFocus={() => handleFocus('interval')}
                                 onBlur={() => handleBlur('interval')}
                             />
                             <span>Minute</span>
-                        </span>
+                        </div>
                     </div>
-                </div>
-
-                <div className="flex flex-col">
-                    <div className={`w-full rounded-full border ${focusState.strategy ? 'border-white' : 'border-gray-400'} my-3 bg-primary-container`}>
-                        <span className="p-3 flex items-center">
+                    {/* Strategy */}
+                    <div className={`h-12 my-3 flex flex-col justify-center w-full rounded-lg border ${focusState.strategy ? 'border-white' : 'border-gray-400'} bg-primary-container`}>
+                        <div className="p-3 flex items-center">
                             <span>Strategy</span>
                             <button
-                                className="bg-transparent mx-2 text-right focus:outline-none w-full no-spinners"
-                                onClick={() => setIsModalOpen(true)}
-                                onFocus={() => handleFocus('strategy')}
-                                onBlur={() => handleBlur('strategy')}
-                            >
-                                {strategy?.name ?? 'Select Strategy'}
+                                    className="bg-transparent mx-2 text-right focus:outline-none w-full no-spinners"
+                                    onClick={() => setIsModalOpen(true)}
+                                    onFocus={() => handleFocus('strategy')}
+                                    onBlur={() => handleBlur('strategy')}
+                                >
+                                    {strategy?.name ?? 'Select Strategy'}
                             </button>
-                            <span>
-                            </span>
-                        </span>
+                        </div>
                     </div>
+                    <div 
+                        className='text-sm text-gray-400 underline decoration-solid underline-offset-4'
+                        onClick={() => setShowStrategyDetails(!showStrategyDetails)}
+                    > 0 Strategies Selected</div>
                     {
-                        strategy && (
+                        showStrategyDetails && (
                             <div className="flex flex-col items-end">
                                 {
                                     Object.entries(strategy?.params).map(([key, value], index) => (
@@ -114,17 +110,19 @@ const Backtest = () => {
                             </div>
                         )
                     }
+
+                    {isModalOpen && (
+                        <StrategyModal
+                            onClose={() => setIsModalOpen(false)}
+                            handleStrategyChange={handleStrategyChange}
+                        />
+                    )}
                 </div>
 
-                {isModalOpen && (
-                    <StrategyModal
-                        onClose={() => setIsModalOpen(false)}
-                        handleStrategyChange={handleStrategyChange}
-                    />
-                )}
+                <hr className='mt-8 bg-gray-500 border-t-1 border-transparent w-full' />
 
                 <button
-                    className="bg-green-400 hover:bg-green-600 text-white rounded-full py-2 px-4 mt-4 w-full"
+                    className="bg-green-500 hover:bg-green-600 text-white rounded-lg py-2 px-4 my-8 w-full h-13"
                     onClick={handleSubmit}
                 >
                     Submit
