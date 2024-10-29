@@ -4,6 +4,8 @@ import StrategyModal from './StrategyModal';
 import { UserStrategy } from '../_type/startegy';
 import Datepicker from 'react-tailwindcss-datepicker';
 import { useWebsocket } from '../_context/websocket.context';
+import axiosInstance from '../_api/axios';
+import { AxiosResponse } from 'axios';
 
 const Backtest = () => {
     const { symbol } = useWebsocket();
@@ -36,15 +38,34 @@ const Backtest = () => {
         setIsModalOpen(false);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
         const formData = {
-            symbol,
-            date,
-            interval,
-            strategy,
+            "symbol": symbol,
+            "startDate": date.startDate?.toISOString(),
+            "endDate": date.endDate?.toISOString(),
+            "usdt": quantity,
+            "interval": interval.toString(),
+            "tc": 0.1,
+            "leverage": 1,
+            "strategies": strategy.reduce((acc, s) => {
+                acc[s.name] = { ...s.params };
+                return acc;
+            }, {})
         };
-        console.log('Form Data:', formData);
+
+        try {
+            const result = await axiosInstance.post("/algo/backtest", formData);
+            console.log(result);
+            // status code and response body
+            const { status, data } = result as AxiosResponse;
+            console.log(status);
+            console.log(data);
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
     };
 
     const handleFocus = (inputName: string) => {
