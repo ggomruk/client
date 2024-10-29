@@ -52,7 +52,7 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ onClose, handleStrategyCh
                                 <ul>
                                     {selectedStrategy.params.map((param, index) => (
                                         <div className='flex flex-row' key={param+"_"+index}>
-                                            <div className={`w-full rounded-full border border-gray-400 my-3 bg-primary-container`}>
+                                            <div className={`w-full rounded-lg border border-gray-400 my-3 bg-primary-container`}>
                                                 <span className="p-3 flex items-center">
                                                     <span className="w-32">{param}</span>
                                                     <input
