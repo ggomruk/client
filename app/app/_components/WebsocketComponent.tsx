@@ -41,7 +41,6 @@ const WebsocketComponent = () => {
             <Backtest />
             <Forward />
             <History />
-            <div className="w-32 h-32 bg-red-200"><button onClick={sendBacktest}>Send</button></div>
         </div>
     )
 }
