@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react'
-import { useWebsocket } from '../_context/websocket.context';
+import { useWebsocket } from '../_provider/binance.websocket';
 import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData } from "lightweight-charts";
 
 const FinancialChart = () => {

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import StrategyModal from './StrategyModal';
 import { UserStrategy } from '../_type/startegy';
 import Datepicker from 'react-tailwindcss-datepicker';
-import { useWebsocket } from '../_context/websocket.context';
+import { useWebsocket } from '../_provider/binance.websocket';
 import axiosInstance from '../_api/axios';
 import { AxiosResponse } from 'axios';
 

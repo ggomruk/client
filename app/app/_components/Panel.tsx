@@ -1,6 +1,6 @@
 'use client'
 
-import { useWebsocket } from "../_context/websocket.context";
+import { useWebsocket } from "../_provider/binance.websocket";
 import { faArrowCircleDown, faSearch, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useCallback, useEffect, useRef } from 'react';
