@@ -1,26 +1,8 @@
 'use client';
 import axios from "axios";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react"
-
-interface IKlineData {
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    time: number;
-}
-
-interface ISymbolData {
-    eventTime: number;
-    symbol: string;
-    priceChange: number;
-    priceChangePercent: number;
-    lastPrice: number;
-    openPrice: number;
-    highPrice: number;
-    lowPrice: number;
-    quantity: number;
-}
+import { IKlineData } from "../_dto/kline";
+import { ISymbolData } from "../_dto/symbol";
 
 interface IWebsocketProviderProps {
     children: ReactNode;
@@ -46,7 +28,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
         const historyData : IKlineData[] = [];
         const fetchData = async () => {
             // Get initial data
-            let startTime = new Date(new Date().getFullYear(), new Date().getMonth(), 14).getTime();
+            let startTime = new Date(new Date().getFullYear(), new Date().getMonth(), 7).getTime();
             const endTime = new Date().getTime();
             const interval = "1m";
             
@@ -61,6 +43,8 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                         await new Promise((resolve) => setTimeout(resolve, 1000));
                         continue;
                     } else {
+                        console.log(url)
+                        console.log(response.data)
                         const data = response.data;
                         const d = data.map((item) => ({
                             open: parseFloat(item[1]),

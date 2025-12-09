@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 
 const strategyList = [
     { name: 'Moving Average Convergence Divergence', symbol: 'MACD', params: ['short', 'long', 'signal'] },
@@ -11,98 +11,101 @@ const strategyList = [
     { name: 'SO', symbol: 'SO', params: ['period', 'd_mw'] },
 ];
 
-
 const Forward = () => {
     const [interval, setInterval] = useState<number>(1);
-    const [focusState, setFocusState] = useState<{ [key: string]: boolean }>({});
     const [strategy, setStrategy] = useState<string>('MACD');
-    const [strategyParams, setStrategyParams] = useState<any>({});
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleStrategyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedStrategy = e.target.value;
         setStrategy(selectedStrategy);
-        setStrategyParams({});
     };
 
-    const handleFocus = (inputName: string) => {
-        setFocusState({ ...focusState, [inputName]: true });
-    };
-
-    const handleBlur = (inputName: string) => {
-        setFocusState({ ...focusState, [inputName]: false });
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
+        
         const formData = {
             interval,
             strategy,
-            strategyParams,
         };
+        
         console.log('Form Data:', formData);
-        // Process the form data (e.g., send to an API)
+        
+        // Simulate API call
+        setTimeout(() => {
+            setIsLoading(false);
+        }, 1000);
     };
 
     return (
-        <div className="mr-8 p-5 text-white border border-solid border-opacity-70 border-gray-500 rounded-xl shadow w-1/4 bg-primary-container-dark">
-            <div className='px-2'>
-                <div className='text-3xl py-3'>Signal</div>
-                    {/* Interval */}
-                    <div className={`h-12 my-3 flex flex-col justify-center w-full rounded-lg border ${focusState.interval ? 'border-white' : 'border-gray-400'} bg-primary-container`}>
-                        <div className="p-3 flex items-center">
-                            <span>Interval</span>
-                            <input
-                                className="bg-transparent mx-2 text-right focus:outline-none w-full no-spinners"
-                                type="number"
-                                value={interval}
-                                min="0"
-                                onChange={(e) => setInterval(Number(e.target.value))}
-                                onFocus={() => handleFocus('interval')}
-                                onBlur={() => handleBlur('interval')}
-                            />
-                            <span>Minute</span>
-                        </div>
-                    </div>
-
-                    {/* Strategy Dropdown */}
-                    <div className='flex flex-row'>
-                        <div className={`w-full rounded-lg border ${focusState.strategy ? 'border-white' : 'border-gray-400'} my-3 bg-primary-container`}>
-                            <span className="p-3 flex items-center">
-                                <span>Strategy</span>
-                                <select
-                                    value={strategy}
-                                    className="bg-transparent mx-2 text-right focus:outline-none w-full no-spinners"
-                                    onChange={handleStrategyChange}
-                                    onFocus={() => handleFocus('strategy')}
-                                    onBlur={() => handleBlur('strategy')}
-                                >
-                                    {
-                                        strategyList.map((strategy, index) => (
-                                            <option key={index} value={strategy.symbol}>{strategy.name} ({strategy.symbol})</option>
-                                        ))
-                                    }
-                                </select>
-                                <span>
-                                </span>
-                            </span>
-                        </div>
-                    </div>
-
-                <div className='flex flex-col `items-end'>
-
+        <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4">
+                <h2 className="text-2xl font-bold text-white">Signal Trading</h2>
+                <p className="text-indigo-200 text-sm mt-1">Real-time strategy execution</p>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                {/* Interval Input */}
+                <div>
+                    <label className="block text-gray-300 text-sm font-medium mb-2">
+                        Interval (Minutes)
+                    </label>
+                    <input
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        type="number"
+                        value={interval}
+                        min="1"
+                        onChange={(e) => setInterval(Number(e.target.value))}
+                        placeholder="Enter interval"
+                    />
                 </div>
 
+                {/* Strategy Dropdown */}
+                <div>
+                    <label className="block text-gray-300 text-sm font-medium mb-2">
+                        Strategy
+                    </label>
+                    <select
+                        value={strategy}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer"
+                        onChange={handleStrategyChange}
+                    >
+                        {strategyList.map((strategy, index) => (
+                            <option key={index} value={strategy.symbol} className="bg-gray-800">
+                                {strategy.name} ({strategy.symbol})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Submit Button */}
                 <button
-                    className="bg-green-400 hover:bg-green-600 text-white rounded-lg py-2 px-4 mt-4 w-full"
-                    onClick={handleSubmit}
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg py-3 px-4 transition duration-200 flex items-center justify-center gap-2"
                 >
-                    Submit
+                    {isLoading ? (
+                        <>
+                            <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Starting...
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Submit
+                        </>
+                    )}
                 </button>
-
-
-            </div>
+            </form>
         </div>
-    )
-}
+    );
+};
 
-export default Forward
+export default Forward;

@@ -6,7 +6,7 @@ import Forward from './Forward';
 import History from './History';
 
 const WebsocketComponent = () => {
-    const { socket } = useServerWebsocket();
+    // const { socket } = useServerWebsocket();
 
     useEffect(() => {
         if(!socket) return;
