@@ -74,6 +74,8 @@ const Backtest = () => {
             }, {} as Record<string, any>)
         };
 
+        console.log(formData);
+
         try {
             const result = await axiosInstance.post("/algo/backtest", formData);
             console.log(result);
