@@ -1,4 +1,4 @@
-import { Strategy } from "../_type/startegy";
+import { Strategy } from "../_types/startegy.js";
 
 export const strategyList : Strategy[] = [
     { name: 'Moving Average Convergence Divergence', symbol: 'MACD', params: ['ema_s', 'ema_l', 'signal_mw'] },

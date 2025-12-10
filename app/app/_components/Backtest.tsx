@@ -1,11 +1,11 @@
 'use client'
 import React, { useState } from 'react';
 import StrategyModal from './StrategyModal';
-import { UserStrategy } from '../_type/startegy';
 import Datepicker from 'react-tailwindcss-datepicker';
 import { useWebsocket } from '../_provider/binance.websocket';
 import axiosInstance from '../_api/axios';
 import { AxiosResponse } from 'axios';
+import { UserStrategy } from '../_types/startegy';
 
 const Backtest = () => {
     const { symbol } = useWebsocket();
@@ -93,78 +93,78 @@ const Backtest = () => {
     };
 
     return (
-        <div className="p-6 text-white border border-gray-700 rounded-xl shadow-lg bg-gray-800 h-full">
-            <div className='flex items-center justify-between mb-6'>
-                <h2 className='text-2xl font-bold text-indigo-400'>Backtest Strategy</h2>
-                <div className="flex items-center gap-2 px-3 py-1 bg-gray-700 rounded-full text-sm">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-gray-300">{symbol}</span>
+        <div className="bg-primary-100 rounded-md border border-primary-300 p-3 transition-all duration-200 hover:border-primary-400 animate-slide-in">
+            <div className='flex items-center justify-between mb-3'>
+                <h2 className='text-sm font-semibold text-text-primary'>Backtest Strategy</h2>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-success/20 text-success transition-all duration-200 hover:bg-success/30">
+                    <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse-subtle"></div>
+                    <span className="text-xs font-medium">{symbol}</span>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-2.5">
                 {/* Capital & Settings */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <label className="block text-xs font-medium text-muted mb-1">
                             Capital (USDT)
                         </label>
                         <input
-                            className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                             type="number"
                             value={quantity}
                             min="0"
                             step="100"
                             onChange={(e) => setQuantity(Number(e.target.value))}
+                            className="text-sm"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <label className="block text-xs font-medium text-muted mb-1">
                             Leverage
                         </label>
                         <input
-                            className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                             type="number"
                             value={leverage}
                             min="1"
                             max="70"
                             onChange={(e) => setLeverage(Number(e.target.value))}
+                            className="text-sm"
                         />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <label className="block text-xs font-medium text-muted mb-1">
                             Interval (Minutes)
                         </label>
                         <input
-                            className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                             type="number"
                             value={interval}
                             min="1"
                             onChange={(e) => setInterval(Number(e.target.value))}
+                            className="text-sm"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                        <label className="block text-xs font-medium text-muted mb-1">
                             Trading Cost (%)
                         </label>
                         <input
-                            className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-1 focus:ring-indigo-500"
                             type="number"
                             value={tc}
                             min="0"
                             max="2"
                             step="0.01"
                             onChange={(e) => setTc(Number(e.target.value))}
+                            className="text-sm"
                         />
                     </div>
                 </div>
 
                 {/* Date Range */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
+                    <label className="block text-xs font-medium text-muted mb-1">
                         Date Range
                     </label>
                     <div className="backtest-datepicker">
@@ -179,15 +179,15 @@ const Backtest = () => {
 
                 {/* Strategy Selection */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
+                    <label className="block text-xs font-medium text-muted mb-1">
                         Trading Strategies
                     </label>
                     <button
                         type="button"
-                        className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors flex items-center justify-center gap-2"
+                        className="btn-primary w-full flex items-center justify-center gap-2 text-sm py-2.5 px-4"
                         onClick={() => setIsModalOpen(true)}
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                         Add Strategy
@@ -196,9 +196,9 @@ const Backtest = () => {
 
                 {/* Selected Strategies */}
                 {strategy.length > 0 && (
-                    <div className="mt-4">
+                    <div className="mt-2">
                         <div 
-                            className='flex items-center justify-between text-sm text-gray-400 mb-2 cursor-pointer'
+                            className='flex items-center justify-between text-xs font-medium text-muted mb-2 cursor-pointer hover:text-text-primary transition-colors'
                             onClick={() => setShowStrategyDetails(!showStrategyDetails)}
                         >
                             <span>{strategy.length} {strategy.length === 1 ? 'Strategy' : 'Strategies'} Selected</span>
@@ -217,15 +217,15 @@ const Backtest = () => {
                                 {strategy.map((s, index) => (
                                     <div 
                                         key={index} 
-                                        className="p-3 bg-gray-900 border border-gray-700 rounded-lg"
+                                        className="card border"
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
-                                                <div className="font-medium text-indigo-400 mb-1">{s.name}</div>
-                                                <div className="text-xs text-gray-500 space-y-1">
+                                                <div className="text-sm font-medium mb-1" style={{color: 'var(--primary-400)'}}>{s.name}</div>
+                                                <div className="text-xs text-subtle space-y-1">
                                                     {Object.entries(s.params).map(([k, v]) => (
                                                         <div key={k}>
-                                                            <span className="text-gray-400">{k}:</span> {v}
+                                                            <span className="text-muted">{k}:</span> {v}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -233,9 +233,9 @@ const Backtest = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveStrategy(index)}
-                                                className="ml-2 text-red-400 hover:text-red-300 transition-colors"
+                                                className="ml-2 text-error hover:brightness-110 transition-all"
                                             >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                             </button>
@@ -258,20 +258,20 @@ const Backtest = () => {
                 <button
                     type="submit"
                     disabled={isSubmitting || strategy.length === 0}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2"
+                    className="btn-primary w-full font-semibold py-2.5 px-4 text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-3 transition-all duration-200"
                 >
                     {isSubmitting ? (
                         <>
-                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            Running Backtest...
+                            Running...
                         </>
                     ) : (
                         <>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                             Run Backtest
                         </>

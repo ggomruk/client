@@ -2,6 +2,7 @@
   "name": "ggomruk_client",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,24 +14,29 @@
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "axios": "^1.7.7",
+    "date-fns": "^4.1.0",
     "lightweight-charts": "^4.2.1",
-    "next": "14.2.14",
-    "react": "^18",
-    "react-dom": "^18",
+    "next": "16.0.8",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "react-loading-skeleton": "^3.5.0",
-    "react-tailwindcss-datepicker": "^1.7.2",
+    "react-tailwindcss-datepicker": "^2.0.0",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "^18",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.8.1",
     "@typescript-eslint/parser": "^8.8.1",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "14.2.14",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "16.0.8",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.6.2"
+  },
+  "overrides": {
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3"
   }
 }

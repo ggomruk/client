@@ -7,9 +7,11 @@ import {
     useContext, 
 } from "react";
 import io, { Socket } from "socket.io-client";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 interface IServerWebsocketContext {
     socket: Socket | null;
+    isConnected: boolean;
 }
 
 const ServerWebsocketContext = createContext<IServerWebsocketContext|undefined>(undefined);
@@ -20,27 +22,56 @@ interface ServerWebsocketProviderProps {
 
 export const ServerWebsocketProvider : React.FC<ServerWebsocketProviderProps> = ({children}) => {
     const [socket, setSocket] = useState<Socket | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
+    const { user, isAuthenticated } = useAuth();
 
     useEffect(() => {
-        const _socket = io("http://localhost:5678/ws", { transports: ['websocket'] });
+        // Only connect if user is authenticated
+        if (!isAuthenticated || !user) {
+            return;
+        }
+
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:5678";
+        const _socket = io(`${wsUrl}/ws`, { 
+            transports: ['websocket'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5
+        });
 
         _socket.on('connect',  () => {
             console.log('Connected to server websocket');
-        })
+            setIsConnected(true);
+            
+            // Subscribe to backtest updates for this user
+            _socket.emit('backtest:subscribe', { userId: user.userId });
+        });
 
         _socket.on('disconnect', () => {
             console.log('Disconnected from server websocket');
-        })
+            setIsConnected(false);
+        });
+
+        _socket.on('backtest:subscribed', (data) => {
+            console.log('Subscribed to backtest updates:', data);
+        });
+
+        _socket.on('error', (error) => {
+            console.error('WebSocket error:', error);
+        });
 
         setSocket(_socket);
 
         return () => {
+            if (user) {
+                _socket.emit('backtest:unsubscribe', { userId: user.userId });
+            }
             _socket.disconnect();
         }
-    }, [])
+    }, [isAuthenticated, user]);
 
     return (
-        <ServerWebsocketContext.Provider value={{socket}}>
+        <ServerWebsocketContext.Provider value={{socket, isConnected}}>
             {children}
         </ServerWebsocketContext.Provider>
     )

@@ -46,7 +46,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                         console.log(url)
                         console.log(response.data)
                         const data = response.data;
-                        const d = data.map((item) => ({
+                        const d = data.map((item: any[]) => ({
                             open: parseFloat(item[1]),
                             high: parseFloat(item[2]),
                             low: parseFloat(item[3]),

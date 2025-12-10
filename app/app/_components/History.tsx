@@ -1,118 +1,112 @@
-'use client'
-import React, { useState, useEffect } from 'react';
+'use client';
 
-interface BacktestResult {
-    id: string;
-    symbol: string;
-    strategy: string;
-    startDate: string;
-    endDate: string;
-    status: 'pending' | 'running' | 'completed' | 'failed';
-    profit?: number;
-    createdAt: string;
-}
+import React, { useState, useEffect } from 'react';
+import { useBacktest } from '../_contexts/BacktestContext';
 
 const History = () => {
-    const [history, setHistory] = useState<BacktestResult[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { backtests, loading, refreshBacktests } = useBacktest();
+    const [filter, setFilter] = useState<'all' | 'completed' | 'processing' | 'error'>('all');
 
-    // Mock data for demonstration
     useEffect(() => {
-        // In production, fetch from API
-        // fetchHistory();
-    }, []);
+        refreshBacktests();
+    }, [refreshBacktests]);
+
+    const backtestList = Array.from(backtests.values())
+        .filter(bt => {
+            if (filter === 'all') return true;
+            return bt.status === filter;
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'completed':
-                return 'bg-green-500';
-            case 'running':
-                return 'bg-blue-500';
-            case 'pending':
-                return 'bg-yellow-500';
-            case 'failed':
-                return 'bg-red-500';
-            default:
-                return 'bg-gray-500';
+            case 'completed': return 'bg-success';
+            case 'processing': return 'bg-info';
+            case 'pending': return 'bg-warning';
+            case 'error': return 'bg-error';
+            default: return 'bg-primary-300';
         }
     };
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return (
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                );
-            case 'running':
-                return (
-                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                );
-            case 'failed':
-                return (
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                );
-            default:
-                return (
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                    </svg>
-                );
-        }
+    const formatPercentage = (value?: number) => {
+        if (value === undefined) return 'N/A';
+        return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (minutes < 1) return 'just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
+        return date.toLocaleDateString();
     };
 
     return (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
-                <h2 className="text-2xl font-bold text-white">History</h2>
-                <p className="text-purple-200 text-sm mt-1">Backtest results</p>
+        <div className="h-full flex flex-col bg-primary-100 animate-slide-in">
+            <div className="px-3 py-2.5 border-b flex items-center justify-between" style={{borderColor: 'var(--primary-300)'}}>
+                <h2 className="text-sm font-semibold text-text-primary">Recent Backtests</h2>
+                <button
+                    onClick={refreshBacktests}
+                    disabled={loading}
+                    className="p-1 hover:bg-primary-200 rounded transition-all duration-200 hover:scale-110"
+                >
+                    <svg className={`w-4 h-4 text-muted ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
             </div>
             
-            <div className="p-6">
-                {history.length > 0 ? (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                        {history.map((item) => (
-                            <div
-                                key={item.id}
-                                className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-purple-500 transition cursor-pointer"
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-white font-semibold">{item.symbol}</span>
-                                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${getStatusColor(item.status)} bg-opacity-20`}>
-                                        <span className={`text-xs ${getStatusColor(item.status).replace('bg-', 'text-')}`}>
-                                            {getStatusIcon(item.status)}
-                                        </span>
-                                        <span className="text-xs text-white capitalize">{item.status}</span>
+            <div className="px-2 py-2 border-b" style={{borderColor: 'var(--primary-300)'}}>
+                <div className="flex gap-1.5">
+                    <button onClick={() => setFilter('all')} className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 ${filter === 'all' ? 'bg-primary-400 text-white shadow-lg shadow-primary-400/30' : 'text-muted hover:text-white hover:bg-primary-200 hover:scale-105'}`}>All</button>
+                    <button onClick={() => setFilter('completed')} className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 ${filter === 'completed' ? 'bg-success text-white shadow-lg shadow-success/30' : 'text-muted hover:text-white hover:bg-primary-200 hover:scale-105'}`}>Done</button>
+                    <button onClick={() => setFilter('processing')} className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 ${filter === 'processing' ? 'bg-info text-white shadow-lg shadow-info/30' : 'text-muted hover:text-white hover:bg-primary-200 hover:scale-105'}`}>Running</button>
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+                {loading && backtestList.length === 0 ? (
+                    <div className="text-center py-8 animate-fade-in">
+                        <div className="animate-spin text-2xl mb-2" style={{color: 'var(--primary-400)'}}>⟳</div>
+                        <p className="text-muted text-xs">Loading...</p>
+                    </div>
+                ) : backtestList.length > 0 ? (
+                    <div className="p-2 space-y-1.5">
+                        {backtestList.map((item, index) => (
+                            <div key={item.backtestId} className="p-2.5 rounded-md cursor-pointer hover:bg-primary-200 transition-all duration-200 border hover:border-primary-400 hover:shadow-lg hover:-translate-y-0.5 animate-slide-in" style={{borderColor: 'var(--primary-300)', background: 'var(--primary-100)', animationDelay: `${index * 50}ms`}}>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <span className="text-sm font-medium text-white">{item.params?.symbol || 'Unknown'}</span>
+                                    <div className={`px-1.5 py-0.5 rounded text-xs ${getStatusColor(item.status)}`} style={{opacity: 0.2}}>
+                                        <span className={`${getStatusColor(item.status).replace('bg-', 'text-')}`} style={{opacity: 1}}>{item.status}</span>
                                     </div>
                                 </div>
-                                
-                                <div className="text-sm text-gray-300 space-y-1">
-                                    <div>Strategy: <span className="text-purple-400">{item.strategy}</span></div>
-                                    <div className="flex justify-between">
-                                        <span>Period: {new Date(item.startDate).toLocaleDateString()} - {new Date(item.endDate).toLocaleDateString()}</span>
-                                        {item.profit !== undefined && (
-                                            <span className={item.profit >= 0 ? 'text-green-400' : 'text-red-400'}>
-                                                {item.profit >= 0 ? '+' : ''}{item.profit.toFixed(2)}%
-                                            </span>
-                                        )}
-                                    </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-muted">{formatDate(item.createdAt)}</span>
+                                    {item.status === 'completed' && item.result && (
+                                        <span className={`font-semibold ${(item.result.totalReturn || 0) >= 0 ? 'status-success' : 'status-error'}`}>
+                                            {formatPercentage(item.result.totalReturn)}
+                                        </span>
+                                    )}
+                                    {item.status === 'processing' && (
+                                        <span className="status-info font-medium">{item.progress}%</span>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <svg className="w-16 h-16 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p className="text-gray-400 text-lg font-medium">No records</p>
-                        <p className="text-gray-500 text-sm mt-2">Run a backtest to see results here</p>
+                    <div className="text-center py-8 px-4">
+                        <div className="text-4xl mb-2">📊</div>
+                        <p className="text-muted text-xs mb-1">No backtests yet</p>
+                        <p className="text-subtle text-xs">Run a backtest to see results</p>
                     </div>
                 )}
             </div>

@@ -20,10 +20,37 @@ const config: Config = {
         "5xl": "48px",
       },
       colors: {
+        // Legacy variables (keep for backwards compatibility)
         background: "var(--background)",
         foreground: "var(--foreground)",
-        "primary-container": 'rgb(36,41,46)',
-        "primary-container-dark": 'rgb(30,34,40)'
+        
+        // Deep Blue & Gold Palette (using CSS variables)
+        primary: {
+          50: 'var(--primary-50)',
+          100: 'var(--primary-100)',
+          200: 'var(--primary-200)',
+          300: 'var(--primary-300)',
+          400: 'var(--primary-400)',
+          500: 'var(--primary-500)',
+        },
+        secondary: {
+          400: 'var(--secondary-400)',
+          500: 'var(--secondary-500)',
+          600: 'var(--secondary-600)',
+        },
+        tertiary: {
+          400: 'var(--tertiary-400)',
+          500: 'var(--tertiary-500)',
+        },
+        success: 'var(--success)',
+        error: 'var(--error)',
+        warning: 'var(--warning)',
+        info: 'var(--info)',
+        
+        // Text colors
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-tertiary': 'var(--text-tertiary)',
       },
     },
   },

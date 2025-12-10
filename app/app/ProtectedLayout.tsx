@@ -3,6 +3,8 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { BacktestProvider } from './_contexts/BacktestContext';
+import { ServerWebsocketProvider } from './_provider/server.websocket';
 
 export default function ProtectedLayout({
   children,
@@ -55,5 +57,11 @@ export default function ProtectedLayout({
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <ServerWebsocketProvider>
+      <BacktestProvider>
+        {children}
+      </BacktestProvider>
+    </ServerWebsocketProvider>
+  );
 }
