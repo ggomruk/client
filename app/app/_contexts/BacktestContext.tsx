@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useServerWebsocket } from '../_provider/server.websocket';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { BacktestResult, BacktestProgress, BacktestComplete, BacktestError } from '../_types/backtest';
-import backtestApi from '../_api/backtest.api';
+import backtestService from '../../services/backtestService';
 
 interface BacktestContextType {
   backtests: Map<string, BacktestResult>;
@@ -157,8 +157,13 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
   const submitBacktest = useCallback(async (params: any): Promise<string> => {
     try {
       setLoading(true);
-      const { backtestId } = await backtestApi.submitBacktest(params);
-      return backtestId;
+      const response = await backtestService.submitBacktest(params);
+      
+      if (response.ok && response.data) {
+        return response.data.backtestId;
+      } else {
+        throw new Error(response.error || 'Failed to submit backtest');
+      }
     } catch (error: any) {
       console.error('Failed to submit backtest:', error);
       throw error;
@@ -178,12 +183,15 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
 
     try {
       setLoading(true);
-      const userBacktests = await backtestApi.getUserBacktests();
+      const response = await backtestService.getUserBacktests();
       
-      const backtestMap = new Map<string, BacktestResult>();
-      userBacktests.forEach(bt => backtestMap.set(bt.backtestId, bt));
-      
-      setBacktests(backtestMap);
+      if (response.ok && response.data) {
+        const backtestMap = new Map<string, BacktestResult>();
+        response.data.forEach(bt => backtestMap.set(bt.backtestId, bt));
+        setBacktests(backtestMap);
+      } else {
+        console.error('Failed to refresh backtests:', response.error);
+      }
     } catch (error) {
       console.error('Failed to refresh backtests:', error);
     } finally {

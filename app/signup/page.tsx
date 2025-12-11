@@ -24,17 +24,11 @@ export default function SignupPage() {
     if (username.length < 8) {
       errors.push('Username must be at least 8 characters long');
     }
-    if (!/(?=.*[A-Z])/.test(username)) {
-      errors.push('Username must contain at least one uppercase letter');
-    }
     if (!/(?=.*[a-z])/.test(username)) {
       errors.push('Username must contain at least one lowercase letter');
     }
     if (!/(?=.*\d)/.test(username)) {
       errors.push('Username must contain at least one number');
-    }
-    if (!/(?=.*[@$!%*?&])/.test(username)) {
-      errors.push('Username must contain at least one special character (@$!%*?&)');
     }
 
     // Email validation
@@ -146,7 +140,7 @@ export default function SignupPage() {
                 disabled={loading}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Min 8 chars with uppercase, lowercase, number, and special char
+                Min 8 characters with at least one lowercase letter and one number
               </p>
             </div>
 

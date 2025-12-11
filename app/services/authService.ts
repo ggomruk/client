@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import axiosInstance from '../app/_api/axios';
 
 interface LoginResponse {
   ok: number;
@@ -51,12 +49,9 @@ class AuthService {
    */
   async login(username: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await axios.post<LoginResponse>(
-        `${API_URL}/api/auth/login`,
-        { username, password },
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
+      const response = await axiosInstance.post<LoginResponse>(
+        '/auth/login',
+        { username, password }
       );
       return response.data;
     } catch (error: any) {
@@ -73,12 +68,9 @@ class AuthService {
    */
   async signup(username: string, password: string, email: string): Promise<SignupResponse> {
     try {
-      const response = await axios.post<SignupResponse>(
-        `${API_URL}/api/auth/signup`,
-        { username, password, email },
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
+      const response = await axiosInstance.post<SignupResponse>(
+        '/auth/signup',
+        { username, password, email }
       );
       return response.data;
     } catch (error: any) {
@@ -95,15 +87,9 @@ class AuthService {
    */
   async logout(token: string): Promise<LogoutResponse> {
     try {
-      const response = await axios.post<LogoutResponse>(
-        `${API_URL}/api/auth/signout`,
-        {},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+      const response = await axiosInstance.post<LogoutResponse>(
+        '/auth/signout',
+        {}
       );
       return response.data;
     } catch (error: any) {
@@ -120,13 +106,8 @@ class AuthService {
    */
   async verifyToken(token: string): Promise<any> {
     try {
-      const response = await axios.get<VerifyResponse>(
-        `${API_URL}/api/auth/verify`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+      const response = await axiosInstance.get<VerifyResponse>(
+        '/auth/verify'
       );
       
       if (response.data.ok && response.data.valid && response.data.user) {
@@ -145,13 +126,8 @@ class AuthService {
    */
   async getProfile(token: string): Promise<any> {
     try {
-      const response = await axios.get(
-        `${API_URL}/api/auth/profile`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+      const response = await axiosInstance.get(
+        '/auth/profile'
       );
       
       if (response.data.ok && response.data.data) {

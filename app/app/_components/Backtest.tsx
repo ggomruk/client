@@ -3,9 +3,8 @@ import React, { useState } from 'react';
 import StrategyModal from './StrategyModal';
 import Datepicker from 'react-tailwindcss-datepicker';
 import { useWebsocket } from '../_provider/binance.websocket';
-import axiosInstance from '../_api/axios';
-import { AxiosResponse } from 'axios';
 import { UserStrategy } from '../_types/startegy';
+import backtestService from '../../services/backtestService';
 
 const Backtest = () => {
     const { symbol } = useWebsocket();
@@ -77,14 +76,11 @@ const Backtest = () => {
         console.log(formData);
 
         try {
-            const result = await axiosInstance.post("/algo/backtest", formData);
-            console.log(result);
-            const { status, data } = result as AxiosResponse;
-            console.log(status);
-            console.log(data);
-            
-            if (data.ok) {
-                alert('Backtest submitted successfully!');
+            const response = await backtestService.submitBacktest(formData);
+            if (response.ok && response.data) {
+                alert(`Backtest submitted successfully! ID: ${response.data.backtestId}`);
+            } else {
+                alert(response.error || 'Failed to submit backtest');
             }
         } catch (error) {
             console.error('Error:', error);
