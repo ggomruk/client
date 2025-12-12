@@ -4,6 +4,7 @@ interface LoginResponse {
   ok: number;
   data?: {
     access_token: string;
+    refresh_token?: string;
     user: {
       userId: string;
       username: string;
@@ -17,6 +18,7 @@ interface SignupResponse {
   ok: number;
   data?: {
     access_token: string;
+    refresh_token?: string;
     user: {
       userId: string;
       username: string;
@@ -39,6 +41,14 @@ interface VerifyResponse {
     userId: string;
     username: string;
     email: string;
+  };
+  error?: string;
+}
+
+interface RefreshResponse {
+  ok: number;
+  data?: {
+    access_token: string;
   };
   error?: string;
 }
@@ -138,6 +148,25 @@ class AuthService {
     } catch (error: any) {
       console.error('Get profile error:', error);
       throw new Error('Failed to get profile');
+    }
+  }
+
+  /**
+   * Refresh access token using refresh token
+   */
+  async refreshToken(refreshToken: string): Promise<RefreshResponse> {
+    try {
+      const response = await axiosInstance.post<RefreshResponse>(
+        '/auth/refresh',
+        { refresh_token: refreshToken }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Refresh token error:', error);
+      return {
+        ok: 0,
+        error: error.response?.data?.error || error.message || 'Token refresh failed',
+      };
     }
   }
 }

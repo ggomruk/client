@@ -68,10 +68,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.login(username, password);
       
       if (response.ok && response.data) {
-        const { access_token, user: userData } = response.data;
+        const { access_token, refresh_token, user: userData } = response.data;
         
-        // Store token
+        // Store both tokens
         localStorage.setItem('token', access_token);
+        if (refresh_token) {
+          localStorage.setItem('refreshToken', refresh_token);
+        }
+        
         setToken(access_token);
         setUser(userData);
         
@@ -91,10 +95,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.signup(username, password, email);
       
       if (response.ok && response.data) {
-        const { access_token, user: userData } = response.data;
+        const { access_token, refresh_token, user: userData } = response.data;
         
-        // Store token
+        // Store both tokens
         localStorage.setItem('token', access_token);
+        if (refresh_token) {
+          localStorage.setItem('refreshToken', refresh_token);
+        }
+        
         setToken(access_token);
         setUser(userData);
         
@@ -117,8 +125,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear local state regardless of API call success
+      // Clear both tokens and local state
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       setToken(null);
       setUser(null);
       router.push('/login');
