@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { BacktestProvider } from './_contexts/BacktestContext';
 import { ServerWebsocketProvider } from './_provider/server.websocket';
+import { ToastProvider } from './_contexts/ToastContext';
+import ToastContainer from './_components/ToastContainer';
 
 export default function ProtectedLayout({
   children,
@@ -58,10 +60,13 @@ export default function ProtectedLayout({
   }
 
   return (
-    <ServerWebsocketProvider>
-      <BacktestProvider>
-        {children}
-      </BacktestProvider>
-    </ServerWebsocketProvider>
+    <ToastProvider>
+      <ServerWebsocketProvider>
+        <BacktestProvider>
+          {children}
+          <ToastContainer />
+        </BacktestProvider>
+      </ServerWebsocketProvider>
+    </ToastProvider>
   );
 }

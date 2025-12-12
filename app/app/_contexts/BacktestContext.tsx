@@ -160,7 +160,22 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
       const response = await backtestService.submitBacktest(params);
       
       if (response.ok && response.data) {
-        return response.data.backtestId;
+        const backtestId = response.data.backtestId;
+        
+        // Immediately add the backtest to the list with 'pending' status
+        const newBacktest: BacktestResult = {
+          backtestId: backtestId,
+          userId: user?.userId || '',
+          status: 'pending',
+          progress: 0,
+          params: params,
+          createdAt: new Date().toISOString(),
+        };
+
+        setBacktests(prev => new Map(prev).set(backtestId, newBacktest));
+        setActiveBacktest(newBacktest);
+        
+        return backtestId;
       } else {
         throw new Error(response.error || 'Failed to submit backtest');
       }
@@ -170,7 +185,7 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Get a specific backtest
   const getBacktest = useCallback((backtestId: string): BacktestResult | undefined => {

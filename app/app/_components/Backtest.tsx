@@ -4,10 +4,13 @@ import StrategyModal from './StrategyModal';
 import Datepicker from 'react-tailwindcss-datepicker';
 import { useWebsocket } from '../_provider/binance.websocket';
 import { UserStrategy } from '../_types/startegy';
-import backtestService from '../../services/backtestService';
+import { useBacktest } from '../_contexts/BacktestContext';
+import { useToast } from '../_contexts/ToastContext';
 
 const Backtest = () => {
     const { symbol } = useWebsocket();
+    const { submitBacktest } = useBacktest();
+    const toast = useToast();
     const [quantity, setQuantity] = useState<number>(1000);
     const [interval, setInterval] = useState<number>(1);
     const [leverage, setLeverage] = useState<number>(1);
@@ -18,25 +21,24 @@ const Backtest = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // Called if user selects a strategy and sets the parameters
+    // Called when user saves a strategy from the modal
     const handleStrategyChange = (selectedStrategy: UserStrategy) => {
-        // If there is no strategy, add the selected strategy
-        if(!strategy.length)  {
-            return setStrategy([selectedStrategy]);
-        }
-        // check if strategy already exists in the list
-        const index = strategy?.findIndex((s) => s.name === selectedStrategy.name);
-        // if strategy already exists, replace the strategy with same name to the new strategy
+        // Check if strategy already exists in the list
+        const index = strategy.findIndex((s) => s.name === selectedStrategy.name);
+        
         if (index !== -1) {
+            // Update existing strategy
             const newStrategies = [...strategy];
             newStrategies[index] = selectedStrategy;
             setStrategy(newStrategies);
         } else {
-            // else add the new strategy to the list
+            // Add new strategy
             setStrategy([...strategy, selectedStrategy]);
         }
         
+        // Close modal and show success message
         setIsModalOpen(false);
+        toast.success(`Strategy "${selectedStrategy.name}" added successfully!`, 3000);
     };
 
     const handleRemoveStrategy = (index: number) => {
@@ -47,13 +49,14 @@ const Backtest = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Validation - only show warnings when user actually tries to submit
         if (!date.startDate || !date.endDate) {
-            alert('Please select date range');
+            toast.warning('Please select a date range before running backtest');
             return;
         }
 
         if (strategy.length === 0) {
-            alert('Please select at least one strategy');
+            toast.warning('Please add at least one strategy before running backtest');
             return;
         }
 
@@ -73,18 +76,18 @@ const Backtest = () => {
             }, {} as Record<string, any>)
         };
 
-        console.log(formData);
-
         try {
-            const response = await backtestService.submitBacktest(formData);
-            if (response.ok && response.data) {
-                alert(`Backtest submitted successfully! ID: ${response.data.backtestId}`);
-            } else {
-                alert(response.error || 'Failed to submit backtest');
-            }
+            const backtestId = await submitBacktest(formData);
+            
+            // Show success notification ONLY when backtest is successfully submitted
+            toast.success(`🚀 Backtest started! Running analysis for ${symbol}...`, 5000);
+            
+            // Optionally reset form (or keep strategies for easy re-run)
+            // setStrategy([]);
+            // setShowStrategyDetails(false);
         } catch (error) {
             console.error('Error:', error);
-            alert('Failed to submit backtest');
+            toast.error('Failed to submit backtest. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
