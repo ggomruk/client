@@ -186,7 +186,10 @@ const Backtest = () => {
                     <button
                         type="button"
                         className="btn-primary w-full flex items-center justify-center gap-2 text-sm py-2.5 px-4"
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setIsModalOpen(true);
+                        }}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -251,7 +254,7 @@ const Backtest = () => {
                 {isModalOpen && (
                     <StrategyModal
                         onClose={() => setIsModalOpen(false)}
-                        handleStrategyChange={handleStrategyChange}
+                        handleStrategyChange={() => {}}
                     />
                 )}
 
