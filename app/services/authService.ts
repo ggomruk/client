@@ -1,65 +1,42 @@
 import axiosInstance from '../app/_api/axios';
 
-interface LoginResponse {
-  ok: number;
-  data?: {
-    access_token: string;
-    refresh_token?: string;
-    user: {
-      userId: string;
-      username: string;
-      email: string;
-    };
-  };
-  error?: string;
+interface GeneralResponse<T = any> {
+  isOk: boolean;
+  errorCode: number | null;
+  message: string;
+  payload: T | null;
 }
 
-interface SignupResponse {
-  ok: number;
-  data?: {
-    access_token: string;
-    refresh_token?: string;
-    user: {
-      userId: string;
-      username: string;
-      email: string;
-    };
-  };
-  error?: string;
-}
-
-interface LogoutResponse {
-  ok: number;
-  message?: string;
-  error?: string;
-}
-
-interface VerifyResponse {
-  ok: number;
-  valid?: boolean;
-  user?: {
+interface LoginData {
+  access_token: string;
+  refresh_token?: string;
+  user: {
     userId: string;
     username: string;
     email: string;
   };
-  error?: string;
 }
 
-interface RefreshResponse {
-  ok: number;
-  data?: {
-    access_token: string;
+interface VerifyData {
+  valid: boolean;
+  user: {
+    userId: string;
+    username: string;
+    email: string;
   };
-  error?: string;
+}
+
+interface RefreshData {
+  access_token: string;
 }
 
 class AuthService {
   /**
    * Login with username and password
    */
-  async login(username: string, password: string): Promise<LoginResponse> {
+  async login(username: string, password: string): Promise<GeneralResponse<LoginData>> {
     try {
-      const response = await axiosInstance.post<LoginResponse>(
+      const response = await axiosInstance.post<GeneralResponse<LoginData>>(
         '/auth/login',
         { username, password }
       );
@@ -67,8 +44,10 @@ class AuthService {
     } catch (error: any) {
       console.error('Login API error:', error);
       return {
-        ok: 0,
-        error: error.response?.data?.error || error.message || 'Login failed',
+        isOk: false,
+        errorCode: error.response?.data?.errorCode || 9001,
+        message: error.response?.data?.message || 'Login failed. Please try again.',
+        payload: null,
       };
     }
   }
@@ -76,9 +55,9 @@ class AuthService {
   /**
    * Signup new user
    */
-  async signup(username: string, password: string, email: string): Promise<SignupResponse> {
+  async signup(username: string, password: string, email: string): Promise<GeneralResponse<LoginData>> {
     try {
-      const response = await axiosInstance.post<SignupResponse>(
+      const response = await axiosInstance.post<GeneralResponse<LoginData>>(
         '/auth/signup',
         { username, password, email }
       );
@@ -86,8 +65,10 @@ class AuthService {
     } catch (error: any) {
       console.error('Signup API error:', error);
       return {
-        ok: 0,
-        error: error.response?.data?.error || error.message || 'Signup failed',
+        isOk: false,
+        errorCode: error.response?.data?.errorCode || 9001,
+        message: error.response?.data?.message || 'Signup failed. Please try again.',
+        payload: null,
       };
     }
   }
@@ -95,9 +76,9 @@ class AuthService {
   /**
    * Logout user
    */
-  async logout(token: string): Promise<LogoutResponse> {
+  async logout(token: string): Promise<GeneralResponse<null>> {
     try {
-      const response = await axiosInstance.post<LogoutResponse>(
+      const response = await axiosInstance.post<GeneralResponse<null>>(
         '/auth/signout',
         {}
       );
@@ -105,8 +86,10 @@ class AuthService {
     } catch (error: any) {
       console.error('Logout API error:', error);
       return {
-        ok: 0,
-        error: error.response?.data?.error || error.message || 'Logout failed',
+        isOk: false,
+        errorCode: error.response?.data?.errorCode || 9001,
+        message: error.response?.data?.message || 'Logout failed. Please try again.',
+        payload: null,
       };
     }
   }
@@ -116,12 +99,12 @@ class AuthService {
    */
   async verifyToken(token: string): Promise<any> {
     try {
-      const response = await axiosInstance.get<VerifyResponse>(
+      const response = await axiosInstance.get<GeneralResponse<VerifyData>>(
         '/auth/verify'
       );
       
-      if (response.data.ok && response.data.valid && response.data.user) {
-        return response.data.user;
+      if (response.data.isOk && response.data.payload?.valid && response.data.payload.user) {
+        return response.data.payload.user;
       } else {
         throw new Error('Invalid token');
       }
@@ -136,12 +119,12 @@ class AuthService {
    */
   async getProfile(token: string): Promise<any> {
     try {
-      const response = await axiosInstance.get(
+      const response = await axiosInstance.get<GeneralResponse<any>>(
         '/auth/profile'
       );
       
-      if (response.data.ok && response.data.data) {
-        return response.data.data;
+      if (response.data.isOk && response.data.payload) {
+        return response.data.payload;
       } else {
         throw new Error('Failed to get profile');
       }
@@ -154,9 +137,9 @@ class AuthService {
   /**
    * Refresh access token using refresh token
    */
-  async refreshToken(refreshToken: string): Promise<RefreshResponse> {
+  async refreshToken(refreshToken: string): Promise<GeneralResponse<RefreshData>> {
     try {
-      const response = await axiosInstance.post<RefreshResponse>(
+      const response = await axiosInstance.post<GeneralResponse<RefreshData>>(
         '/auth/refresh',
         { refresh_token: refreshToken }
       );
@@ -164,8 +147,10 @@ class AuthService {
     } catch (error: any) {
       console.error('Refresh token error:', error);
       return {
-        ok: 0,
-        error: error.response?.data?.error || error.message || 'Token refresh failed',
+        isOk: false,
+        errorCode: error.response?.data?.errorCode || 9001,
+        message: error.response?.data?.message || 'Token refresh failed. Please try again.',
+        payload: null,
       };
     }
   }

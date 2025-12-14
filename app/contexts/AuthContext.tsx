@@ -67,8 +67,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.login(username, password);
       
-      if (response.ok && response.data) {
-        const { access_token, refresh_token, user: userData } = response.data;
+      if (response.isOk && response.payload) {
+        const { access_token, refresh_token, user: userData } = response.payload;
         
         // Store both tokens
         localStorage.setItem('token', access_token);
@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Redirect to app
         router.push('/app');
       } else {
-        throw new Error(response.error || 'Login failed');
+        throw new Error(response.message || 'Login failed');
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -94,8 +94,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.signup(username, password, email);
       
-      if (response.ok && response.data) {
-        const { access_token, refresh_token, user: userData } = response.data;
+      if (response.isOk && response.payload) {
+        const { access_token, refresh_token, user: userData } = response.payload;
         
         // Store both tokens
         localStorage.setItem('token', access_token);
@@ -109,7 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Redirect to app
         router.push('/app');
       } else {
-        throw new Error(response.error || 'Signup failed');
+        throw new Error(response.message || 'Signup failed');
       }
     } catch (error: any) {
       console.error('Signup error:', error);

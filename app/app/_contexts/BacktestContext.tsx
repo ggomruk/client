@@ -42,7 +42,7 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
 
     // Handle backtest started
     const handleBacktestStarted = (data: { backtestId: string; userId: string; params: any }) => {
-      console.log('Backtest started:', data);
+      console.log('🚀 [WebSocket] Backtest started:', data);
       
       const newBacktest: BacktestResult = {
         backtestId: data.backtestId,
@@ -59,7 +59,7 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
 
     // Handle progress updates
     const handleProgress = (data: BacktestProgress) => {
-      console.log('Backtest progress:', data);
+      console.log('📊 [WebSocket] Backtest progress:', data.progress + '%', data);
       
       setBacktests(prev => {
         const updated = new Map(prev);
@@ -86,7 +86,7 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
 
     // Handle completion
     const handleComplete = (data: BacktestComplete) => {
-      console.log('Backtest complete:', data);
+      console.log('✅ [WebSocket] Backtest complete:', data);
       
       setBacktests(prev => {
         const updated = new Map(prev);
@@ -115,7 +115,7 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
 
     // Handle errors
     const handleError = (data: BacktestError) => {
-      console.error('Backtest error:', data);
+      console.error('❌ [WebSocket] Backtest error:', data);
       
       setBacktests(prev => {
         const updated = new Map(prev);
@@ -145,7 +145,10 @@ export const BacktestProvider: React.FC<BacktestProviderProps> = ({ children }) 
     socket.on('backtest:complete', handleComplete);
     socket.on('backtest:error', handleError);
 
+    console.log('🎧 [BacktestContext] Registered WebSocket event listeners for backtest events');
+
     return () => {
+      console.log('🔇 [BacktestContext] Unregistering WebSocket event listeners');
       socket.off('backtest:started', handleBacktestStarted);
       socket.off('backtest:progress', handleProgress);
       socket.off('backtest:complete', handleComplete);

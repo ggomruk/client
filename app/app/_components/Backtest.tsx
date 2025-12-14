@@ -254,7 +254,7 @@ const Backtest = () => {
                 {isModalOpen && (
                     <StrategyModal
                         onClose={() => setIsModalOpen(false)}
-                        handleStrategyChange={() => {}}
+                        handleStrategyChange={handleStrategyChange}
                     />
                 )}
 

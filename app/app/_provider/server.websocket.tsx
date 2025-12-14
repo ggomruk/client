@@ -40,24 +40,39 @@ export const ServerWebsocketProvider : React.FC<ServerWebsocketProviderProps> = 
         });
 
         _socket.on('connect',  () => {
-            console.log('Connected to server websocket');
+            console.log('✅ Connected to server websocket, Socket ID:', _socket.id);
             setIsConnected(true);
             
             // Subscribe to backtest updates for this user
+            console.log('📡 Subscribing to backtest updates for user:', user.userId);
             _socket.emit('backtest:subscribe', { userId: user.userId });
         });
 
-        _socket.on('disconnect', () => {
-            console.log('Disconnected from server websocket');
+        _socket.on('disconnect', (reason) => {
+            console.log('❌ Disconnected from server websocket, reason:', reason);
             setIsConnected(false);
         });
 
+        _socket.on('reconnect', (attemptNumber) => {
+            console.log('🔄 Reconnected after', attemptNumber, 'attempts');
+            // Re-subscribe after reconnection
+            _socket.emit('backtest:subscribe', { userId: user.userId });
+        });
+
+        _socket.on('reconnect_attempt', (attemptNumber) => {
+            console.log('🔄 Attempting to reconnect...', attemptNumber);
+        });
+
         _socket.on('backtest:subscribed', (data) => {
-            console.log('Subscribed to backtest updates:', data);
+            console.log('✅ Subscribed to backtest updates:', data);
         });
 
         _socket.on('error', (error) => {
-            console.error('WebSocket error:', error);
+            console.error('❌ WebSocket error:', error);
+        });
+
+        _socket.on('connect_error', (error) => {
+            console.error('❌ Connection error:', error.message);
         });
 
         setSocket(_socket);
