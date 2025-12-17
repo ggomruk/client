@@ -3,85 +3,182 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import styles from './Navbar.module.css';
 
 const Navbar = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const { user, logout, isAuthenticated } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+  const pathname = usePathname();
 
-    return (
-        <nav className="bg-primary-100 border-b border-primary-300 sticky top-0 z-50 backdrop-blur-sm animate-slide-in">
-            <div className="container mx-auto px-3 lg:px-4 py-2.5">
-                <div className="flex justify-between items-center">
-                    {/* Logo/Brand */}
-                    <Link href="/app" className="flex items-center gap-2.5 group">
-                        <div className="relative">
-                            <div className="bg-primary-400 p-1.5 rounded-md transition-all duration-200 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary-400/30">
-                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
-                            </div>
-                        </div>
-                        <span className="text-lg font-semibold text-text-primary bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
-                            Ggomruk
-                        </span>
-                    </Link>
+  const navItems = [
+    { href: '/app', label: 'Dashboard', icon: <DashboardIcon /> },
+    { href: '/app/optimizer', label: 'Optimizer', icon: <OptimizerIcon /> },
+    { href: '/app/compare', label: 'Compare', icon: <CompareIcon /> },
+    { href: '/app/walkforward', label: 'Walk-Forward', icon: <WalkForwardIcon /> },
+    { href: '/app/alerts', label: 'Alerts', icon: <AlertsIcon /> },
+    { href: '/app/history', label: 'History', icon: <HistoryIcon /> },
+  ];
 
-                    {/* Mobile menu button */}
-                    <div className="block lg:hidden">
-                    <button 
-                        onClick={() => setIsOpen(!isOpen)} 
-                        className="text-text-primary focus:outline-none hover:text-primary-400 p-1.5 transition-all duration-200 hover:scale-110"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"}></path>
-                        </svg>
-                    </button>
-                </div>
+  const isActive = (href: string) => {
+    if (href === '/app') {
+      return pathname === '/app';
+    }
+    return pathname.startsWith(href);
+  };
 
-                {/* Navigation Links */}
-                <div className={`w-full lg:flex lg:items-center lg:w-auto ${isOpen ? 'block' : 'hidden'}`}>
-                    <ul className="lg:flex lg:space-x-1 lg:items-center">
-                        <li>
-                            <Link href="/app" className="block text-text-secondary text-sm py-1.5 px-3 hover:text-text-primary hover:bg-primary-200 rounded-md transition-all">
-                                Dashboard
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/app/backtest" className="block text-text-secondary text-sm py-1.5 px-3 hover:text-text-primary hover:bg-primary-200 rounded-md transition-all">
-                                Backtest
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/app/history" className="block text-text-secondary text-sm py-1.5 px-3 hover:text-text-primary hover:bg-primary-200 rounded-md transition-all duration-200 hover:translate-x-1">
-                                History
-                            </Link>
-                        </li>
-                        
-                        {/* User Menu */}
-                        {isAuthenticated && user && (
-                            <>
-                                <li className="block text-text-secondary py-1.5 px-3 lg:ml-4">
-                                    <span className="text-xs">
-                                        <span className="text-text-tertiary">Welcome, </span>
-                                        <span className="font-medium text-text-primary">{user.username}</span>
-                                    </span>
-                                </li>
-                                <li>
-                                    <button
-                                        onClick={logout}
-                                        className="block w-full text-left lg:w-auto bg-error hover:brightness-110 text-white text-xs py-1.5 px-3 rounded-md transition-all duration-200 hover:shadow-lg hover:shadow-error/30 hover:-translate-y-0.5"
-                                    >
-                                        Logout
-                                    </button>
-                                </li>
-                            </>
-                        )}
-                    </ul>
+  return (
+    <nav className={styles.navbar}>
+      <div className={styles.container}>
+        {/* Logo */}
+        <Link href="/app" className={styles.logo}>
+          <div className={styles.logoIcon}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 20L16 12L20 16L28 8" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M20 8H28V16" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <defs>
+                <linearGradient id="gradient" x1="8" y1="8" x2="28" y2="20" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#7c3aed"/>
+                  <stop offset="1" stopColor="#06b6d4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <span className={styles.logoText}>Ggomruk</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <div className={styles.desktopNav}>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
+            >
+              <span className={styles.navIcon}>{item.icon}</span>
+              <span>{item.label}</span>
+              {isActive(item.href) && <div className={styles.activeIndicator} />}
+            </Link>
+          ))}
+        </div>
+
+        {/* User Menu */}
+        <div className={styles.userMenu}>
+          {isAuthenticated && user && (
+            <>
+              <div className={styles.userInfo}>
+                <div className={styles.userAvatar}>
+                  {user.username.charAt(0).toUpperCase()}
                 </div>
-                </div>
-            </div>
-        </nav>
-    );
+                <span className={styles.username}>{user.username}</span>
+              </div>
+              <button onClick={logout} className={styles.logoutBtn}>
+                <LogoutIcon />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button 
+          className={styles.mobileMenuBtn}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <CloseIcon /> : <MenuIcon />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className={styles.mobileMenu}>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`${styles.mobileNavLink} ${isActive(item.href) ? styles.mobileNavLinkActive : ''}`}
+              onClick={() => setIsOpen(false)}
+            >
+              <span className={styles.navIcon}>{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+          {isAuthenticated && user && (
+            <button onClick={() => { logout(); setIsOpen(false); }} className={styles.mobileLogoutBtn}>
+              <LogoutIcon />
+              <span>Logout</span>
+            </button>
+          )}
+        </div>
+      )}
+    </nav>
+  );
 };
+
+// Icons
+const DashboardIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
+    <rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
+    <rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
+    <rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+const OptimizerIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M3 10L7 6L11 10L17 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M17 8V4H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const CompareIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M3 10H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10 3L10 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+const WalkForwardIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M3 10H10M10 10L7 7M10 10L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M10 10H17M17 10L14 7M17 10L14 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const AlertsIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M10 6V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10 14H10.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+const HistoryIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="currentColor" strokeWidth="2"/>
+    <path d="M10 6V10L13 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const LogoutIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M7 17H4C3.46957 17 2.96086 16.7893 2.58579 16.4142C2.21071 16.0391 2 15.5304 2 15V5C2 4.46957 2.21071 3.96086 2.58579 3.58579C2.96086 3.21071 3.46957 3 4 3H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M13 13L18 10L13 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M18 10H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const MenuIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
 
 export default Navbar;
