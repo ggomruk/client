@@ -115,20 +115,16 @@ export function OptimizerPage() {
   };
 
   return (
-    <div className="flex-1 bg-[#09090b] overflow-y-auto">
-      <div className="max-w-7xl mx-auto p-8">
-        {/* Page Header */}
-        <div className="mb-8 animate-fadeIn">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] rounded-xl flex items-center justify-center animate-float shadow-lg">
-              <Sliders className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold gradient-text">Strategy Optimizer</h1>
-              <p className="text-[#a1a1aa] text-sm mt-1">Fine-tune your strategy parameters for maximum performance</p>
-            </div>
-          </div>
-        </div>
+    <div className="overflow-y-auto p-8">
+      {/* Page Header */}
+      <div className="mb-8 animate-fadeIn">
+        <h1 className="text-[30px] font-bold gradient-text mb-2 leading-[36px]">
+          Strategy Optimizer
+        </h1>
+        <p className="text-base text-[#a1a1aa]">
+          Fine-tune your strategy parameters for maximum performance
+        </p>
+      </div>
 
         {/* Configuration Form */}
         <Card variant="glass" className="p-6 mb-6 animate-slideIn">
@@ -137,7 +133,6 @@ export function OptimizerPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Input
               label="Trading Pair"
-              placeholder="e.g., BTCUSDT"
               value={symbol}
               onChange={setSymbol}
               required
@@ -148,7 +143,6 @@ export function OptimizerPage() {
               options={intervals}
               value={timeInterval}
               onChange={setTimeInterval}
-              placeholder="Select interval"
             />
             
             <Input
@@ -174,7 +168,6 @@ export function OptimizerPage() {
               options={strategies}
               value={strategy}
               onChange={setStrategy}
-              placeholder="Select a strategy"
             />
           </div>
 
@@ -386,6 +379,5 @@ export function OptimizerPage() {
           </div>
         )}
       </div>
-    </div>
   );
 }

@@ -135,9 +135,9 @@ export default function PriceAlerts() {
 
   const getStatusBadge = (status: AlertStatus) => {
     const colors = {
-      active: 'bg-green-100 text-green-800',
-      triggered: 'bg-blue-100 text-blue-800',
-      cancelled: 'bg-gray-100 text-gray-800',
+      active: 'bg-[#05df72]/20 text-[#05df72]',
+      triggered: 'bg-[#06b6d4]/20 text-[#06b6d4]',
+      cancelled: 'bg-[#3f3f46] text-[#a1a1aa]',
     };
 
     return (
@@ -148,36 +148,44 @@ export default function PriceAlerts() {
   };
 
   if (loading) {
-    return <div className="p-6 text-center">Loading alerts...</div>;
+    return <div className="p-8 text-center text-[#a1a1aa]">Loading alerts...</div>;
   }
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-lg max-w-6xl">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Price Alerts</h2>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700"
-        >
-          {showCreateForm ? 'Cancel' : '+ Create Alert'}
-        </button>
+    <div className="overflow-y-auto p-8">
+      {/* Page Header */}
+      <div className="mb-8 animate-fadeIn">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-[30px] font-bold gradient-text leading-[36px]">
+            Price Alerts
+          </h1>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="px-4 py-2 bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+          >
+            {showCreateForm ? 'Cancel' : '+ Create Alert'}
+          </button>
+        </div>
+        <p className="text-base text-[#a1a1aa]">
+          Set up price alerts and get notified when conditions are met
+        </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Total Alerts</p>
-          <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
+        <div className="p-4 glass rounded-lg">
+          <p className="text-sm text-[#a1a1aa]">Total Alerts</p>
+          <p className="text-2xl font-bold text-[#fafafa]">{stats.total}</p>
         </div>
-        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-          <p className="text-sm text-green-600">Active</p>
-          <p className="text-2xl font-bold text-green-800">{stats.active}</p>
+        <div className="p-4 glass rounded-lg">
+          <p className="text-sm text-[#05df72]">Active</p>
+          <p className="text-2xl font-bold text-[#05df72]">{stats.active}</p>
         </div>
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-600">Triggered</p>
-          <p className="text-2xl font-bold text-blue-800">{stats.triggered}</p>
+        <div className="p-4 glass rounded-lg">
+          <p className="text-sm text-[#06b6d4]">Triggered</p>
+          <p className="text-2xl font-bold text-[#06b6d4]">{stats.triggered}</p>
         </div>
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="p-4 glass rounded-lg">
           <p className="text-sm text-gray-600">Cancelled</p>
           <p className="text-2xl font-bold text-gray-800">{stats.cancelled}</p>
         </div>
@@ -185,26 +193,26 @@ export default function PriceAlerts() {
 
       {/* Create Alert Form */}
       {showCreateForm && (
-        <form onSubmit={handleCreateAlert} className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4">Create New Alert</h3>
+        <form onSubmit={handleCreateAlert} className="mb-6 p-6 glass rounded-xl">
+          <h3 className="text-lg font-semibold text-[#fafafa] mb-4">Create New Alert</h3>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Symbol</label>
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">Symbol</label>
               <input
                 type="text"
                 value={formData.symbol}
                 onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 bg-[#27272a] border border-[#3f3f46] rounded-lg text-[#fafafa] focus:border-[#7c3aed] focus:outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Alert Type</label>
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">Alert Type</label>
               <select
                 value={formData.alertType}
                 onChange={(e) => setFormData({ ...formData, alertType: e.target.value as AlertType })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 bg-[#27272a] border border-[#3f3f46] rounded-lg text-[#fafafa] focus:border-[#7c3aed] focus:outline-none"
               >
                 <option value={AlertType.PRICE_ABOVE}>Price Above</option>
                 <option value={AlertType.PRICE_BELOW}>Price Below</option>
@@ -213,31 +221,31 @@ export default function PriceAlerts() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target Value</label>
+            <label className="block text-sm font-medium text-[#a1a1aa] mb-2">Target Value</label>
             <input
               type="number"
               step="0.01"
               value={formData.targetValue}
               onChange={(e) => setFormData({ ...formData, targetValue: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 bg-[#27272a] border border-[#3f3f46] rounded-lg text-[#fafafa] focus:border-[#7c3aed] focus:outline-none"
               required
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
+            <label className="block text-sm font-medium text-[#a1a1aa] mb-2">Message (Optional)</label>
             <input
               type="text"
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 bg-[#27272a] border border-[#3f3f46] rounded-lg text-[#fafafa] focus:border-[#7c3aed] focus:outline-none"
               placeholder="Custom alert message"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700"
+            className="w-full px-4 py-2 bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
           >
             Create Alert
           </button>
@@ -247,31 +255,31 @@ export default function PriceAlerts() {
       {/* Alerts List */}
       <div className="space-y-3">
         {alerts.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-[#a1a1aa] glass rounded-xl p-8">
             No alerts yet. Create your first alert!
           </div>
         ) : (
           alerts.map((alert) => (
-            <div key={alert._id} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+            <div key={alert._id} className="p-4 glass rounded-xl hover-glow transition-all duration-300">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h3 className="font-semibold text-lg text-gray-800">{alert.symbol}</h3>
-                  <p className="text-sm text-gray-600">{getAlertTypeLabel(alert.alertType)}: ${alert.targetValue.toLocaleString()}</p>
-                  {alert.message && <p className="text-sm text-gray-500 mt-1">{alert.message}</p>}
+                  <h3 className="font-semibold text-lg text-[#fafafa]">{alert.symbol}</h3>
+                  <p className="text-sm text-[#a1a1aa]">{getAlertTypeLabel(alert.alertType)}: ${alert.targetValue.toLocaleString()}</p>
+                  {alert.message && <p className="text-sm text-[#a1a1aa] mt-1">{alert.message}</p>}
                 </div>
                 <div className="flex gap-2 items-center">
                   {getStatusBadge(alert.status)}
                   {alert.status === AlertStatus.ACTIVE && (
                     <button
                       onClick={() => handleCancelAlert(alert._id)}
-                      className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                      className="px-3 py-1 text-xs bg-[#f59e0b] text-white rounded-lg hover:opacity-90 transition-opacity"
                     >
                       Cancel
                     </button>
                   )}
                   <button
                     onClick={() => handleDeleteAlert(alert._id)}
-                    className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                    className="px-3 py-1 text-xs bg-[#ff6467] text-white rounded-lg hover:opacity-90 transition-opacity"
                   >
                     Delete
                   </button>
@@ -279,14 +287,14 @@ export default function PriceAlerts() {
               </div>
 
               {alert.triggeredAt && (
-                <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
-                  <p className="text-blue-800">
+                <div className="mt-2 p-2 bg-[#06b6d4]/20 rounded-lg text-sm">
+                  <p className="text-[#06b6d4]">
                     Triggered at ${alert.triggeredPrice?.toLocaleString()} on {new Date(alert.triggeredAt).toLocaleString()}
                   </p>
                 </div>
               )}
 
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-[#71717a] mt-2">
                 Created: {new Date(alert.createdAt).toLocaleString()}
               </p>
             </div>

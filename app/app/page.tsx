@@ -1,49 +1,75 @@
+'use client';
 
 import React from 'react'
-import Panel from './_components/Panel'
-import { WebsocketProvider } from './_provider/binance.websocket'
-import FinancialChart from './_components/Chart'
-import Backtest from './_components/Backtest'
-import Forward from './_components/Forward'
-import History from './_components/History'
-import Navbar from './_components/Navbar'
+import { StakingAssetCard } from './_components/StakingAssetCard'
+import { ActiveStaking } from './_components/ActiveStaking'
+
+// Mock chart data for Top Trading Pairs
+const ethereumData = [3200, 3150, 3180, 3220, 3190, 3250, 3300, 3280, 3320, 3350, 3380, 3420, 3450, 3480, 3520];
+const bnbData = [420, 410, 425, 430, 435, 445, 455, 460, 470, 475, 480, 485, 495, 500, 510];
+const polygonData = [1.2, 1.25, 1.22, 1.18, 1.15, 1.12, 1.1, 1.08, 1.05, 1.02, 0.98, 0.95, 0.92, 0.89, 0.87];
 
 const AppPage = () => {
     return (
-        <WebsocketProvider>
-            <div className="min-h-screen bg-primary-50 flex flex-col">
-                <Navbar />
-                
-                {/* Main Trading View Layout */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    {/* Top Panel - Symbol Info (like TradingView header) */}
-                    <div className="border-b border-primary-300">
-                        <Panel />
-                    </div>
-                    
-                    {/* Main Content Area - Split between Chart and Right Sidebar */}
-                    <div className="flex-1 flex overflow-hidden">
-                        {/* Chart Area - Takes most space (like #2 in reference) */}
-                        <div className="flex-1 flex flex-col min-w-0">
-                            <FinancialChart />
-                        </div>
-                        
-                        {/* Right Sidebar - Market Data/Crypto List (like #3 Order Book area) */}
-                        <div className="w-80 border-l border-primary-300 hidden lg:block overflow-hidden">
-                            <History />
-                        </div>
-                    </div>
-                    
-                    {/* Bottom Panel - Trading Controls (like #4, #5, #6) */}
-                    <div className="border-t border-primary-300">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-3">
-                            <Backtest />
-                            <Forward />
-                        </div>
-                    </div>
+        <div className="p-8">
+            {/* Header */}
+            <div className="mb-8 animate-fadeIn">
+                <h1 className="text-[30px] font-bold gradient-text mb-2 leading-[36px]">
+                    Trading Dashboard
+                </h1>
+                <p className="text-base text-[#a1a1aa]">
+                    Monitor your strategies and backtest performance
+                </p>
+            </div>
+
+            {/* Top Trading Pairs */}
+            <div className="mb-8 animate-slideIn">
+                <h2 className="text-xl font-bold text-[#fafafa] mb-4">
+                    Top Trading Pairs
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StakingAssetCard
+                        name="Ethereum (ETH)"
+                        subtitle="ETH/USDT"
+                        percentage="13.62%"
+                        percentageChange="4.95%"
+                        isPositive={true}
+                        currentValue="$2,766"
+                        icon={<span className="text-purple-900 font-bold text-lg">◆</span>}
+                        iconBg="bg-gradient-to-br from-purple-500 to-purple-600"
+                        chartData={ethereumData}
+                        chartColor="#7c3aed"
+                    />
+                    <StakingAssetCard
+                        name="BNB Chain"
+                        subtitle="BNB/USDT"
+                        percentage="12.72%"
+                        percentageChange="5.67%"
+                        isPositive={true}
+                        currentValue="$2,090"
+                        icon={<span className="text-yellow-900 font-bold text-lg">◆</span>}
+                        iconBg="bg-gradient-to-br from-yellow-500 to-yellow-600"
+                        chartData={bnbData}
+                        chartColor="#06b6d4"
+                    />
+                    <StakingAssetCard
+                        name="Polygon (Matic)"
+                        subtitle="MATIC/USDT"
+                        percentage="6.29%"
+                        percentageChange="1.98%"
+                        isPositive={false}
+                        currentValue="$0.987"
+                        icon={<span className="text-purple-900 font-bold text-lg">◆</span>}
+                        iconBg="bg-gradient-to-br from-purple-400 to-purple-500"
+                        chartData={polygonData}
+                        chartColor="#8b5cf6"
+                    />
                 </div>
             </div>
-        </WebsocketProvider>
+
+            {/* Active Strategy Analysis - includes backtest functionality */}
+            <ActiveStaking />
+        </div>
     )
 }
 

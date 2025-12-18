@@ -24,7 +24,7 @@ export function Select({
   onChange,
   error,
   helperText,
-  placeholder = "Select an option"
+  placeholder
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -47,27 +47,8 @@ export function Select({
   return (
     <div className="w-full" ref={containerRef}>
       <div className="relative">
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen(!isOpen);
-            setFocused(true);
-          }}
-          className={`w-full bg-[#27272a] border rounded-lg px-4 py-3 text-left flex items-center justify-between transition-all duration-300
-            ${error ? "border-red-500" : focused ? "border-[#7c3aed] shadow-[0_0_0_3px_rgba(124,58,237,0.1)]" : "border-[#3f3f46]"}
-            focus:outline-none`}
-        >
-          <div className="flex items-center gap-2">
-            {selectedOption?.icon}
-            <span className={selectedOption ? "text-[#fafafa]" : "text-[#a1a1aa]"}>
-              {selectedOption?.label || placeholder}
-            </span>
-          </div>
-          <ChevronDown className={`w-4 h-4 text-[#a1a1aa] transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-        
         {label && (
-          <label className={`absolute left-4 transition-all duration-300 pointer-events-none
+          <label className={`absolute left-4 transition-all duration-300 pointer-events-none z-10
             ${focused || selectedOption 
               ? "top-0 -translate-y-1/2 text-xs bg-[#27272a] px-2 text-[#7c3aed]" 
               : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa]"}`}
@@ -75,6 +56,26 @@ export function Select({
             {label}
           </label>
         )}
+        
+        <button
+          type="button"
+          onClick={() => {
+            setIsOpen(!isOpen);
+            setFocused(true);
+          }}
+          className={`w-full bg-[#27272a] border rounded-lg px-4 text-left flex items-center justify-between transition-all duration-300
+            ${label ? "pt-6 pb-2 h-[52px]" : "py-3 h-[48px]"}
+            ${error ? "border-[#ff6467]" : focused ? "border-[#7c3aed] shadow-[0_0_0_3px_rgba(124,58,237,0.1)]" : "border-[#3f3f46]"}
+            focus:outline-none`}
+        >
+          <div className="flex items-center gap-2">
+            {selectedOption?.icon}
+            <span className={selectedOption ? "text-[#fafafa]" : placeholder ? "text-[#71717a]" : "text-[#a1a1aa]"}>
+              {selectedOption?.label || placeholder || ""}
+            </span>
+          </div>
+          <ChevronDown className={`w-4 h-4 text-[#a1a1aa] transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+        </button>
         
         {isOpen && (
           <div className="absolute z-50 w-full mt-2 bg-[#18181b] border border-[#3f3f46] rounded-lg shadow-2xl overflow-hidden animate-slideIn">
@@ -105,7 +106,7 @@ export function Select({
       </div>
       
       {(error || helperText) && (
-        <div className={`mt-1 text-xs ${error ? "text-red-500" : "text-[#a1a1aa]"}`}>
+        <div className={`mt-1 text-xs ${error ? "text-[#ff6467]" : "text-[#a1a1aa]"}`}>
           {error || helperText}
         </div>
       )}

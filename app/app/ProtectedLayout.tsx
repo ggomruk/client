@@ -7,6 +7,8 @@ import { BacktestProvider } from './_contexts/BacktestContext';
 import { ServerWebsocketProvider } from './_provider/server.websocket';
 import { ToastProvider } from './_contexts/ToastContext';
 import ToastContainer from './_components/ToastContainer';
+import Navbar from './_components/Navbar';
+import { WebsocketProvider } from './_provider/binance.websocket';
 
 export default function ProtectedLayout({
   children,
@@ -63,8 +65,15 @@ export default function ProtectedLayout({
     <ToastProvider>
       <ServerWebsocketProvider>
         <BacktestProvider>
-          {children}
-          <ToastContainer />
+          <WebsocketProvider>
+            <div className="min-h-screen bg-[#09090b] flex flex-col">
+              <Navbar />
+              <main className="flex-1 overflow-y-auto">
+                {children}
+              </main>
+            </div>
+            <ToastContainer />
+          </WebsocketProvider>
         </BacktestProvider>
       </ServerWebsocketProvider>
     </ToastProvider>

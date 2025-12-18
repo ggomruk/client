@@ -13,6 +13,7 @@ const Navbar = () => {
 
   const navItems = [
     { href: '/app', label: 'Dashboard', icon: <DashboardIcon /> },
+    { href: '/app/chart', label: 'Chart', icon: <ChartIcon /> },
     { href: '/app/optimizer', label: 'Optimizer', icon: <OptimizerIcon /> },
     { href: '/app/compare', label: 'Compare', icon: <CompareIcon /> },
     { href: '/app/walkforward', label: 'Walk-Forward', icon: <WalkForwardIcon /> },
@@ -30,53 +31,59 @@ const Navbar = () => {
   return (
     <nav className={styles.navbar}>
       <div className={styles.container}>
-        {/* Logo */}
-        <Link href="/app" className={styles.logo}>
-          <div className={styles.logoIcon}>
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 20L16 12L20 16L28 8" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M20 8H28V16" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="gradient" x1="8" y1="8" x2="28" y2="20" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#7c3aed"/>
-                  <stop offset="1" stopColor="#06b6d4"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <span className={styles.logoText}>Ggomruk</span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <div className={styles.desktopNav}>
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              <span>{item.label}</span>
-              {isActive(item.href) && <div className={styles.activeIndicator} />}
-            </Link>
-          ))}
+        {/* Left: Logo and App Name */}
+        <div className={styles.leftSection}>
+          <Link href="/app" className={styles.logo}>
+            <div className={styles.logoIcon}>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 20L16 12L20 16L28 8" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M20 8H28V16" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                <defs>
+                  <linearGradient id="gradient" x1="8" y1="8" x2="28" y2="20" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#7c3aed"/>
+                    <stop offset="1" stopColor="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <span className={styles.logoText}>Ggomruk</span>
+          </Link>
         </div>
 
-        {/* User Menu */}
-        <div className={styles.userMenu}>
-          {isAuthenticated && user && (
-            <>
-              <div className={styles.userInfo}>
-                <div className={styles.userAvatar}>
-                  {user.username.charAt(0).toUpperCase()}
+        {/* Center: Navigation Tabs */}
+        <div className={styles.centerSection}>
+          <div className={styles.desktopNav}>
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${styles.navLink} ${isActive(item.href) ? styles.navLinkActive : ''}`}
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                <span>{item.label}</span>
+                {isActive(item.href) && <div className={styles.activeIndicator} />}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: User Info and Logout */}
+        <div className={styles.rightSection}>
+          <div className={styles.userMenu}>
+            {isAuthenticated && user && (
+              <>
+                <div className={styles.userInfo}>
+                  <div className={styles.userAvatar}>
+                    {user.username.charAt(0).toUpperCase()}
+                  </div>
+                  <span className={styles.username}>{user.username}</span>
                 </div>
-                <span className={styles.username}>{user.username}</span>
-              </div>
-              <button onClick={logout} className={styles.logoutBtn}>
-                <LogoutIcon />
-              </button>
-            </>
-          )}
+                <button onClick={logout} className={styles.logoutBtn}>
+                  <LogoutIcon />
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
@@ -121,6 +128,13 @@ const DashboardIcon = () => (
     <rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
     <rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
     <rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+const ChartIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M3 3V17H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 13L10 9L13 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 

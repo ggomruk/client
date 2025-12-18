@@ -21,14 +21,37 @@
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 3rem;
   height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
+}
+
+/* Three Section Layout */
+.leftSection {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  margin-right: 4rem;
+}
+
+.centerSection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.rightSection {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: 4rem;
 }
 
 /* Logo */
@@ -67,7 +90,6 @@
 /* Desktop Navigation */
 .desktopNav {
   display: none;
-  flex: 1;
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
@@ -210,10 +232,23 @@
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.3s;
+  margin-left: auto;
 }
 
 @media (min-width: 1024px) {
   .mobileMenuBtn {
+    display: none;
+  }
+  
+  .centerSection,
+  .rightSection {
+    display: flex;
+  }
+}
+
+@media (max-width: 1023px) {
+  .centerSection,
+  .rightSection {
     display: none;
   }
 }

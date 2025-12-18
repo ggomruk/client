@@ -53,6 +53,12 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                             close: parseFloat(item[4]),
                             time: item[6] / 1000,
                         }))
+                        
+                        if (d.length === 0) {
+                            console.log("No data returned, breaking loop");
+                            break;
+                        }
+                        
                         historyData.push(...d);
 
                         const lastDataCloseTime = d[d.length - 1]['time'];
