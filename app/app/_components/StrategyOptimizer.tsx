@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Button, Input, Select } from '@/src/components';
 import { optimizerService, OptimizeStrategyDTO, ParameterRange, OptimizationResult } from '../_api/optimizer.service';
 import styles from './StrategyOptimizer.module.css';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Select } from './ui/select';
 
 export default function StrategyOptimizer() {
   const [formData, setFormData] = useState<OptimizeStrategyDTO>({
@@ -147,7 +150,7 @@ export default function StrategyOptimizer() {
               label="Symbol"
               type="text"
               value={formData.symbol}
-              onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, symbol: value })}
               required
               placeholder="BTCUSDT"
             />
@@ -155,7 +158,7 @@ export default function StrategyOptimizer() {
             <Select
               label="Interval"
               value={formData.interval}
-              onChange={(e) => setFormData({ ...formData, interval: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, interval: value })}
               options={[
                 { value: '1m', label: '1 minute' },
                 { value: '5m', label: '5 minutes' },
@@ -170,7 +173,7 @@ export default function StrategyOptimizer() {
               label="Start Date"
               type="date"
               value={formData.startDate}
-              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, startDate: value })}
               required
             />
 
@@ -178,14 +181,14 @@ export default function StrategyOptimizer() {
               label="End Date"
               type="date"
               value={formData.endDate}
-              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, endDate: value })}
               required
             />
 
             <Select
               label="Optimization Metric"
               value={formData.metric}
-              onChange={(e) => setFormData({ ...formData, metric: e.target.value as any })}
+              onChange={(value) => setFormData({ ...formData, metric: value as any })}
               options={[
                 { value: 'sharpe', label: '📊 Sharpe Ratio' },
                 { value: 'return', label: '💰 Total Return' },
@@ -221,25 +224,25 @@ export default function StrategyOptimizer() {
                     type="text"
                     placeholder="Parameter name"
                     value={range.name}
-                    onChange={(e) => updateParamRange(index, 'name', e.target.value)}
+                    onChange={(value) => updateParamRange(index, 'name', value)}
                   />
                   <Input
                     type="number"
                     placeholder="Min"
-                    value={range.min}
-                    onChange={(e) => updateParamRange(index, 'min', Number(e.target.value))}
+                    value={range.min.toString()}
+                    onChange={(value) => updateParamRange(index, 'min', Number(value))}
                   />
                   <Input
                     type="number"
                     placeholder="Max"
-                    value={range.max}
-                    onChange={(e) => updateParamRange(index, 'max', Number(e.target.value))}
+                    value={range.max.toString()}
+                    onChange={(value) => updateParamRange(index, 'max', Number(value))}
                   />
                   <Input
                     type="number"
                     placeholder="Step"
-                    value={range.step}
-                    onChange={(e) => updateParamRange(index, 'step', Number(e.target.value))}
+                    value={range.step.toString()}
+                    onChange={(value) => updateParamRange(index, 'step', Number(value))}
                   />
                 </div>
                 <button

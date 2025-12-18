@@ -1,14 +1,14 @@
 'use client';
 
-import StrategyOptimizer from '../_components/StrategyOptimizer';
-import Navbar from '../_components/Navbar';
+import { OptimizerPage as OptimizerPageComponent } from '../_components/OptimizerPage';
+import { NavigationBar } from '../_components/NavigationBar';
 
 export default function OptimizerPage() {
   return (
-    <div className="min-h-screen bg-primary-50 flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-[#09090b] flex flex-col">
+      <NavigationBar activeTab="optimizer" onTabChange={() => {}} />
       <div className="flex-1">
-        <StrategyOptimizer />
+        <OptimizerPageComponent />
       </div>
     </div>
   );

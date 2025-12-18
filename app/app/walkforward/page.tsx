@@ -1,14 +1,14 @@
 'use client';
 
-import WalkForwardAnalysis from '../_components/WalkForwardAnalysis';
-import Navbar from '../_components/Navbar';
+import { WalkForwardPage as WalkForwardPageComponent } from '../_components/WalkForwardPage';
+import { NavigationBar } from '../_components/NavigationBar';
 
 export default function WalkForwardPage() {
   return (
-    <div className="min-h-screen bg-primary-50 flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-[#09090b] flex flex-col">
+      <NavigationBar activeTab="walkforward" onTabChange={() => {}} />
       <div className="flex-1">
-        <WalkForwardAnalysis />
+        <WalkForwardPageComponent />
       </div>
     </div>
   );

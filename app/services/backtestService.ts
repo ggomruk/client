@@ -1,5 +1,5 @@
-import axiosInstance from '../app/_api/axios';
-import { BacktestParams, BacktestResult } from '../app/_types/backtest';
+import axiosInstance from "../app/_api/axios";
+import { BacktestResult, BacktestParams } from "../app/_types/backtest";
 
 interface SubmitBacktestResponse {
   ok: number;

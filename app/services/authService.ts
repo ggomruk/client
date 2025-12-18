@@ -1,4 +1,4 @@
-import axiosInstance from '../app/_api/axios';
+import axiosInstance from "../app/_api/axios";
 
 interface GeneralResponse<T = any> {
   isOk: boolean;

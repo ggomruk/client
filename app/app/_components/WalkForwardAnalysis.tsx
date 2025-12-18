@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { optimizerService, WalkForwardDTO } from '../_api/optimizer.service';
-import { Card, Button, Input, Select } from '@/src/components';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Select } from './ui/select';
 import styles from './WalkForwardAnalysis.module.css';
 
 export default function WalkForwardAnalysis() {
@@ -113,13 +116,13 @@ export default function WalkForwardAnalysis() {
             <Input
               label="Symbol"
               value={formData.symbol}
-              onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, symbol: value })}
               required
             />
             <Select
               label="Interval"
               value={formData.interval}
-              onChange={(e) => setFormData({ ...formData, interval: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, interval: value })}
               options={[
                 { value: '15m', label: '15 Minutes' },
                 { value: '1h', label: '1 Hour' },
@@ -134,14 +137,14 @@ export default function WalkForwardAnalysis() {
               label="Start Date"
               type="date"
               value={formData.startDate}
-              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, startDate: value })}
               required
             />
             <Input
               label="End Date"
               type="date"
               value={formData.endDate}
-              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, endDate: value })}
               required
             />
           </div>
@@ -150,7 +153,7 @@ export default function WalkForwardAnalysis() {
             <Select
               label="Strategy"
               value={formData.strategy}
-              onChange={(e) => setFormData({ ...formData, strategy: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, strategy: value })}
               options={[
                 { value: 'MACD', label: 'MACD' },
                 { value: 'RSI', label: 'RSI' },
@@ -175,21 +178,21 @@ export default function WalkForwardAnalysis() {
               label="Training Window (Days)"
               type="number"
               value={formData.trainingWindow.toString()}
-              onChange={(e) => setFormData({ ...formData, trainingWindow: Number(e.target.value) })}
+              onChange={(value) => setFormData({ ...formData, trainingWindow: Number(value) })}
               required
             />
             <Input
               label="Testing Window (Days)"
               type="number"
               value={formData.testingWindow.toString()}
-              onChange={(e) => setFormData({ ...formData, testingWindow: Number(e.target.value) })}
+              onChange={(value) => setFormData({ ...formData, testingWindow: Number(value) })}
               required
             />
             <Input
               label="Step Size (Days)"
               type="number"
               value={formData.stepSize.toString()}
-              onChange={(e) => setFormData({ ...formData, stepSize: Number(e.target.value) })}
+              onChange={(value) => setFormData({ ...formData, stepSize: Number(value) })}
               required
             />
           </div>

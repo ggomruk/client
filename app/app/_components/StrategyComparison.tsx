@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { optimizerService, CompareStrategiesDTO } from '../_api/optimizer.service';
-import { Card, Button } from '@/src/components';
 import styles from './StrategyComparison.module.css';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
 
 interface BacktestOption {
   id: string;
