@@ -18,13 +18,17 @@ interface IndicatorsState {
 }
 
 const FinancialChart = () => {
-    const { klineData } = useWebsocket();
+    const { klineData, loadMoreData, isLoadingMore, symbol } = useWebsocket();
 
     const chartContainerRef = useRef<HTMLDivElement|null>(null);
     const chartRef = useRef<IChartApi|null>(null);
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick">|null>(null);
     const indicatorRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map());
     const resizeObserverRef = useRef<ResizeObserver|null>(null);
+    const isLoadingMoreRef = useRef<boolean>(false);
+    const isInitialLoadRef = useRef<boolean>(true);
+    const previousDataLengthRef = useRef<number>(0);
+    const previousSymbolRef = useRef<string>(symbol);
     
     const [showSettings, setShowSettings] = useState(false);
     const [indicators, setIndicators] = useState<IndicatorsState>({
@@ -171,26 +175,67 @@ const FinancialChart = () => {
         };
     }, []);
 
+    // Setup lazy loading for historical data
+    useEffect(() => {
+        if (!chartRef.current) return;
+
+        const chart = chartRef.current;
+        
+        const handleVisibleLogicalRangeChange = async (logicalRange: any) => {
+            if (!logicalRange || isLoadingMoreRef.current || isLoadingMore) return;
+
+            // Check if user scrolled close to the left edge (first 10% of visible range)
+            const barsInfo = candleSeriesRef.current?.barsInLogicalRange(logicalRange);
+            if (barsInfo && logicalRange.from < 100) {
+                isLoadingMoreRef.current = true;
+                const success = await loadMoreData();
+                isLoadingMoreRef.current = false;
+                
+                if (success) {
+                    console.log('Loaded more historical data');
+                }
+            }
+        };
+
+        // Subscribe to visible range changes
+        chart.timeScale().subscribeVisibleLogicalRangeChange(handleVisibleLogicalRangeChange);
+
+        return () => {
+            chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleVisibleLogicalRangeChange);
+        };
+    }, [loadMoreData, isLoadingMore]);
+
     // Update indicators when config changes
     useEffect(() => {
         if (!chartRef.current) return;
 
+        const chart = chartRef.current; // Capture reference to avoid race conditions
+
         // Remove all existing indicator series
         indicatorRefs.current.forEach((series) => {
-            chartRef.current?.removeSeries(series);
+            try {
+                chart.removeSeries(series);
+            } catch (error) {
+                // Series might already be removed
+                console.debug('Error removing series:', error);
+            }
         });
         indicatorRefs.current.clear();
 
         // Add enabled indicators
         Object.entries(indicators).forEach(([key, config]) => {
-            if (config.enabled && chartRef.current) {
-                const series = chartRef.current.addLineSeries({
-                    color: config.color,
-                    lineWidth: 2,
-                    priceLineVisible: false,
-                    lastValueVisible: false,
-                });
-                indicatorRefs.current.set(key, series);
+            if (config.enabled) {
+                try {
+                    const series = chart.addLineSeries({
+                        color: config.color,
+                        lineWidth: 2,
+                        priceLineVisible: false,
+                        lastValueVisible: false,
+                    });
+                    indicatorRefs.current.set(key, series);
+                } catch (error) {
+                    console.error('Error adding indicator series:', error);
+                }
             }
         });
     }, [indicators]);
@@ -200,6 +245,13 @@ const FinancialChart = () => {
         if (!candleSeriesRef.current || klineData.length === 0) return;
         
         try {
+            // Detect symbol change
+            const symbolChanged = previousSymbolRef.current !== symbol;
+            if (symbolChanged) {
+                isInitialLoadRef.current = true;
+                previousSymbolRef.current = symbol;
+            }
+            
             // Set candlestick data
             const formattedData = klineData.map((item: any) => ({
                 time: item.time,
@@ -209,7 +261,24 @@ const FinancialChart = () => {
                 close: item.close,
             })) as CandlestickData[];
             
-            candleSeriesRef.current.setData(formattedData);
+            // Only use setData + fitContent on initial load or symbol change
+            // Otherwise, preserve the user's scroll position
+            if (isInitialLoadRef.current) {
+                candleSeriesRef.current.setData(formattedData);
+                isInitialLoadRef.current = false;
+                
+                // Only auto-fit on initial load or symbol change
+                if (chartRef.current) {
+                    chartRef.current.timeScale().fitContent();
+                }
+            } else {
+                // For updates (new candles or lazy-loaded data), use setData but preserve position
+                // We still need setData for lazy-loaded data to prepend old candles
+                candleSeriesRef.current.setData(formattedData);
+                // Note: We DON'T call fitContent() to preserve scroll
+            }
+            
+            previousDataLengthRef.current = klineData.length;
             
             // Calculate and set indicator data
             Object.entries(indicators).forEach(([key, config]) => {
@@ -230,15 +299,10 @@ const FinancialChart = () => {
                     }
                 }
             });
-            
-            // Auto-scale to fit data
-            if (chartRef.current) {
-                chartRef.current.timeScale().fitContent();
-            }
         } catch (error) {
             console.error('Error updating chart:', error);
         }
-    }, [klineData, indicators]);
+    }, [klineData, indicators, symbol]);
 
     const updateIndicator = (key: keyof IndicatorsState, field: keyof IndicatorConfig, value: any) => {
         setIndicators(prev => ({
@@ -344,10 +408,17 @@ const FinancialChart = () => {
             )}
 
             {/* Chart - Full remaining height */}
-            <div 
-                ref={chartContainerRef} 
-                className="flex-1 w-full"
-            />
+            <div className="flex-1 w-full relative">
+                <div ref={chartContainerRef} className="w-full h-full" />
+                
+                {/* Loading Indicator */}
+                {isLoadingMore && (
+                    <div className="absolute top-4 left-4 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg" style={{background: 'var(--primary-200)'}}>
+                        <div className="w-3 h-3 border-2 border-primary-400 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-xs text-muted">Loading more data...</span>
+                    </div>
+                )}
+            </div>
             
             {/* Compact Legend */}
             <div className="px-3 py-1.5 border-t flex items-center gap-3 flex-wrap text-xs" style={{borderColor: 'var(--primary-300)'}}>

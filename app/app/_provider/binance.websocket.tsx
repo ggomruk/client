@@ -1,5 +1,5 @@
 'use client';
-import axios from "axios";
+import axiosInstance from "../_api/axios";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react"
 import { IKlineData } from "../_dto/kline";
 import { ISymbolData } from "../_dto/symbol";
@@ -13,6 +13,8 @@ interface IWebsocketContext {
     symbolData: ISymbolData | null;
     symbol: string;
     setSymbol: (symbol: string) => void;
+    loadMoreData: () => Promise<boolean>; // Returns true if more data was loaded
+    isLoadingMore: boolean;
 }
 
 const WebSocketContext = createContext<IWebsocketContext | undefined>(undefined);
@@ -22,60 +24,75 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     const [symbolData, setSymbolData] = useState<ISymbolData | null>(null);
     const [symbol, setSymbol] = useState<string>('BTCUSDT');
     const [isHistoryDataFetched, setisHistoryDataFetched] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const websocketRef = useRef<WebSocket | null>(null);
+    const oldestTimestampRef = useRef<number | null>(null);
+
+    // Function to load more historical data
+    const loadMoreData = async (): Promise<boolean> => {
+        if (isLoadingMore || !oldestTimestampRef.current) return false;
+
+        setIsLoadingMore(true);
+        try {
+            // Calculate endTime (1 minute before our oldest data)
+            const endTime = oldestTimestampRef.current - 60;
+            
+            const response = await axiosInstance.get('/market/klines', {
+                params: {
+                    symbol,
+                    interval: '1m',
+                    limit: 1000, // Fetch 1000 more candles (~16 hours)
+                    endTime: endTime * 1000 // Convert to milliseconds
+                }
+            });
+
+            const olderData: IKlineData[] = response.data;
+            
+            if (olderData.length > 0) {
+                // Prepend older data to existing data
+                setKlineData(prev => [...olderData, ...prev]);
+                // Update oldest timestamp
+                oldestTimestampRef.current = olderData[0].time;
+                setIsLoadingMore(false);
+                return true;
+            }
+            
+            setIsLoadingMore(false);
+            return false;
+        } catch (error) {
+            console.error("Error loading more historical data:", error);
+            setIsLoadingMore(false);
+            return false;
+        }
+    };
 
     useEffect(() => {
-        const historyData : IKlineData[] = [];
         const fetchData = async () => {
-            // Get initial data
-            let startTime = new Date(new Date().getFullYear(), new Date().getMonth(), 7).getTime();
-            const endTime = new Date().getTime();
-            const interval = "1m";
-            
-            while(true) {
-                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${startTime}&endTime=${endTime}&limit=1500`;
-                try {
-                    const response = await axios.get(url)
-                    const status = response.status; // HTTP Response code
-                    if (status === 429 || status === 418) {
-                        const weightUsed = response.headers["x-mbx-used-weight"];
-                        console.log(`Rate limit exceeded: ${weightUsed}`);
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
-                        continue;
-                    } else {
-                        console.log(url)
-                        console.log(response.data)
-                        const data = response.data;
-                        const d = data.map((item: any[]) => ({
-                            open: parseFloat(item[1]),
-                            high: parseFloat(item[2]),
-                            low: parseFloat(item[3]),
-                            close: parseFloat(item[4]),
-                            time: item[6] / 1000,
-                        }))
-                        
-                        if (d.length === 0) {
-                            console.log("No data returned, breaking loop");
-                            break;
-                        }
-                        
-                        historyData.push(...d);
-
-                        const lastDataCloseTime = d[d.length - 1]['time'];
-                        
-                        if(lastDataCloseTime < endTime) {
-                            startTime = lastDataCloseTime * 1000;
-                        } else {
-                            break
-                        }
+            try {
+                // Fetch from YOUR API server, not Binance directly
+                const response = await axiosInstance.get('/market/klines', {
+                    params: {
+                        symbol,
+                        interval: '1m',
+                        limit: 10000 // Last ~7 days of 1m candles
                     }
-                } catch (error) {
-                    console.error("Error fetching data: ", error);
-                    break
+                });
+                
+                const data: IKlineData[] = response.data;
+                setKlineData(data);
+                
+                // Track the oldest timestamp for lazy loading
+                if (data.length > 0) {
+                    oldestTimestampRef.current = data[0].time;
                 }
+                
+                setisHistoryDataFetched(true);
+            } catch (error) {
+                console.error("Error fetching historical data:", error);
+                // Fallback: show empty chart
+                setKlineData([]);
+                setisHistoryDataFetched(true);
             }
-            setKlineData(historyData);
-            setisHistoryDataFetched(true);
         }
 
         fetchData();
@@ -164,7 +181,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     }, [symbol, isHistoryDataFetched]);
 
     return (
-        <WebSocketContext.Provider value={{ klineData, symbolData, symbol, setSymbol }}>
+        <WebSocketContext.Provider value={{ klineData, symbolData, symbol, setSymbol, loadMoreData, isLoadingMore }}>
             {children}
         </WebSocketContext.Provider>
     );
