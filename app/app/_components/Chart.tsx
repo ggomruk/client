@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData } from "lightweight-charts";
 import { useWebsocket } from '../_provider/binance.websocket';
+import { usePanel } from '../_provider/panel.context';
 
 interface IndicatorConfig {
     enabled: boolean;
@@ -19,6 +20,7 @@ interface IndicatorsState {
 
 const FinancialChart = () => {
     const { klineData, loadMoreData, isLoadingMore, symbol, interval, setInterval } = useWebsocket();
+    const { showIndicators, setShowIndicators, isBacktestMode, panelStack, updatePanelStack } = usePanel();
 
     const chartContainerRef = useRef<HTMLDivElement|null>(null);
     const chartRef = useRef<IChartApi|null>(null);
@@ -30,7 +32,6 @@ const FinancialChart = () => {
     const previousDataLengthRef = useRef<number>(0);
     const previousSymbolRef = useRef<string>(symbol);
     
-    const [showSettings, setShowSettings] = useState(false);
     const [indicators, setIndicators] = useState<IndicatorsState>({
         ema1: { enabled: true, period: 12, color: '#F59E0B' },
         ema2: { enabled: true, period: 26, color: '#8B5CF6' },
@@ -357,9 +358,13 @@ const FinancialChart = () => {
                 <div className="flex items-center gap-2">
                     {/* Indicators Button */}
                     <button
-                        onClick={() => setShowSettings(!showSettings)}
+                        onClick={() => {
+                            const newShowState = !showIndicators;
+                            setShowIndicators(newShowState);
+                            updatePanelStack('indicators', newShowState);
+                        }}
                         className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
-                            showSettings
+                            showIndicators
                                 ? 'bg-primary-400 text-white'
                                 : 'bg-primary-200 text-text-secondary hover:text-white hover:bg-primary-300'
                         }`}
@@ -376,10 +381,15 @@ const FinancialChart = () => {
                 <div ref={chartContainerRef} className="w-full h-full" style={{ pointerEvents: 'auto' }} />
                 
                 {/* Floating Indicators Panel */}
-                {showSettings && (
+                {showIndicators && (
                     <div 
                         className="absolute top-6 left-6 bg-[#18181b] border border-[#3f3f46] rounded-xl shadow-2xl p-6"
-                        style={{ width: '512px', zIndex: 10 }}
+                        style={{ 
+                            width: '512px', 
+                            zIndex: panelStack.indexOf('indicators') === panelStack.length - 1 ? 11 : 10,
+                            maxHeight: 'calc(100vh - 400px)',
+                            overflowY: 'auto'
+                        }}
                     >
                         <div className="grid grid-cols-2 gap-6">
                             {Object.entries(indicators).map(([key, config]) => (

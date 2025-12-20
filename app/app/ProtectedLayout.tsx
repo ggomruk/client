@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { BacktestProvider } from './_contexts/BacktestContext';
+import { BacktestProvider } from './_provider/backtest.context';
 import { ServerWebsocketProvider } from './_provider/server.websocket';
 import { ToastProvider } from './_contexts/ToastContext';
 import ToastContainer from './_components/ToastContainer';

@@ -1,9 +1,13 @@
 'use client';
 
 import { useState } from "react";
-import { Star, ChevronDown } from "lucide-react";
+import { Star, Beaker } from "lucide-react";
 import FinancialChart from './Chart';
+import StrategyBuilder from './StrategyBuilder';
+import BacktestResults from './BacktestResults';
 import { useWebsocket } from '../_provider/binance.websocket';
+import { useBacktest } from '../_provider/backtest.context';
+import { PanelProvider } from '../_provider/panel.context';
 
 const tradingPairs = [
   { name: "Bitcoin", symbol: "BTCUSDT" },
@@ -18,6 +22,7 @@ const tradingPairs = [
 
 export default function ChartPage() {
   const { symbol: selectedPair, setSymbol, symbolData } = useWebsocket();
+  const { isBacktestMode, setIsBacktestMode } = useBacktest();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredPairs = tradingPairs.filter(pair => 
@@ -26,13 +31,31 @@ export default function ChartPage() {
   );
 
   return (
-    <div className="flex-1 bg-[#09090b] overflow-hidden flex flex-col min-h-screen">
+    <PanelProvider isBacktestMode={isBacktestMode}>
+      <div className="flex-1 bg-[#09090b] overflow-hidden flex flex-col h-screen">
       {/* Page Header */}
       <div className="p-6 border-b border-[#3f3f46]">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#a78bfa] to-[#22d3ee] bg-clip-text text-transparent mb-2">
-          Trading Charts
-        </h1>
-        <p className="text-[#a1a1aa]">Real-time price charts and market data</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#a78bfa] to-[#22d3ee] bg-clip-text text-transparent mb-2">
+              Trading Charts
+            </h1>
+            <p className="text-[#a1a1aa]">Real-time price charts and market data</p>
+          </div>
+          
+          {/* Backtest Mode Toggle */}
+          <button
+            onClick={() => setIsBacktestMode(!isBacktestMode)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+              isBacktestMode
+                ? 'bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] text-white shadow-lg'
+                : 'bg-[#27272a] text-text-secondary hover:bg-[#3f3f46] border border-[#3f3f46]'
+            }`}
+          >
+            <Beaker className="w-5 h-5" />
+            {isBacktestMode ? 'Backtest Mode: ON' : 'Backtest Mode: OFF'}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
@@ -117,13 +140,20 @@ export default function ChartPage() {
           </div>
 
           {/* Chart */}
-          <div className="flex-1 bg-[#18181b] overflow-hidden">
+          <div className="flex-1 bg-[#18181b] overflow-hidden relative">
             <FinancialChart />
+            
+            {/* Strategy Builder Panel - Only shown in backtest mode */}
+            {isBacktestMode && <StrategyBuilder />}
           </div>
+          
+          {/* Backtest Results Panel - Only shown in backtest mode */}
+          {isBacktestMode && <BacktestResults />}
         </div>
 
 
       </div>
-    </div>
+      </div>
+    </PanelProvider>
   );
 }
