@@ -4,6 +4,21 @@ import { createContext, ReactNode, useContext, useEffect, useRef, useState } fro
 import { IKlineData } from "../_dto/kline";
 import { ISymbolData } from "../_dto/symbol";
 
+// Helper function to convert interval to seconds
+const getIntervalSeconds = (interval: string): number => {
+    const unit = interval.slice(-1);
+    const value = parseInt(interval.slice(0, -1));
+    
+    switch (unit) {
+        case 'm': return value * 60;
+        case 'h': return value * 60 * 60;
+        case 'd': return value * 24 * 60 * 60;
+        case 'w': return value * 7 * 24 * 60 * 60;
+        case 'M': return value * 30 * 24 * 60 * 60; // Approximate
+        default: return 60; // Default to 1 minute
+    }
+};
+
 interface IWebsocketProviderProps {
     children: ReactNode;
 }
@@ -13,6 +28,8 @@ interface IWebsocketContext {
     symbolData: ISymbolData | null;
     symbol: string;
     setSymbol: (symbol: string) => void;
+    interval: string;
+    setInterval: (interval: string) => void;
     loadMoreData: () => Promise<boolean>; // Returns true if more data was loaded
     isLoadingMore: boolean;
 }
@@ -23,6 +40,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     const [klineData, setKlineData] = useState<IKlineData[]>([]);
     const [symbolData, setSymbolData] = useState<ISymbolData | null>(null);
     const [symbol, setSymbol] = useState<string>('BTCUSDT');
+    const [interval, setInterval] = useState<string>('1d');
     const [isHistoryDataFetched, setisHistoryDataFetched] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const websocketRef = useRef<WebSocket | null>(null);
@@ -34,14 +52,16 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
 
         setIsLoadingMore(true);
         try {
-            // Calculate endTime (1 minute before our oldest data)
-            const endTime = oldestTimestampRef.current - 60;
+            // Calculate interval duration in seconds
+            const intervalSeconds = getIntervalSeconds(interval);
+            // Calculate endTime (one interval before our oldest data)
+            const endTime = oldestTimestampRef.current - intervalSeconds;
             
             const response = await axiosInstance.get('/market/klines', {
                 params: {
                     symbol,
-                    interval: '1m',
-                    limit: 1000, // Fetch 1000 more candles (~16 hours)
+                    interval,
+                    limit: 1000, // Fetch 1000 more candles
                     endTime: endTime * 1000 // Convert to milliseconds
                 }
             });
@@ -73,8 +93,8 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                 const response = await axiosInstance.get('/market/klines', {
                     params: {
                         symbol,
-                        interval: '1m',
-                        limit: 10000 // Last ~7 days of 1m candles
+                        interval,
+                        limit: 1000 // Fetch 1000 candles initially
                     }
                 });
                 
@@ -96,7 +116,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
         }
 
         fetchData();
-    }, [symbol])
+    }, [symbol, interval])
 
     useEffect(() => {
         if(!isHistoryDataFetched) return;
@@ -108,7 +128,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                 const subscribe = {
                     method: 'SUBSCRIBE',
                     params: [
-                        `${symbol.toLowerCase()}@kline_1m`,
+                        `${symbol.toLowerCase()}@kline_${interval}`,
                         `${symbol.toLowerCase()}@ticker`
                     ],
                     id: 1
@@ -178,10 +198,10 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
             setisHistoryDataFetched(false);
         }
 
-    }, [symbol, isHistoryDataFetched]);
+    }, [symbol, interval, isHistoryDataFetched]);
 
     return (
-        <WebSocketContext.Provider value={{ klineData, symbolData, symbol, setSymbol, loadMoreData, isLoadingMore }}>
+        <WebSocketContext.Provider value={{ klineData, symbolData, symbol, setSymbol, interval, setInterval, loadMoreData, isLoadingMore }}>
             {children}
         </WebSocketContext.Provider>
     );

@@ -52,9 +52,6 @@ export default function ChartPage() {
           <div className="flex-1 overflow-y-auto">
             <div className="p-3">
               <div className="flex items-center gap-2 text-xs text-[#a1a1aa] mb-3">
-                <button className="px-2 py-1 bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] text-white rounded">All</button>
-                <button className="px-2 py-1 hover:bg-[#27272a] rounded transition-colors">Spot</button>
-                <button className="px-2 py-1 hover:bg-[#27272a] rounded transition-colors">Favorites</button>
               </div>
 
               <div className="space-y-1">
@@ -90,7 +87,6 @@ export default function ChartPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg md:text-xl text-[#fafafa] font-bold">{selectedPair}</span>
-                  <ChevronDown className="w-4 h-4 text-[#a1a1aa]" />
                 </div>
               </div>
               <div>
