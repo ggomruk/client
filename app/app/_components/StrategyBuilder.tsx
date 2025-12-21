@@ -61,7 +61,7 @@ export default function StrategyBuilder() {
     
     // If indicators are visible and should be above backtest
     if (showIndicators && indicatorsIndex < backtestIndex) {
-      return 'top-[310px]'; // Below indicators panel (240px height + 24px gap + 24px chart header)
+      return 'top-[300px]'; // Below indicators panel (240px height + 24px gap + 24px chart header)
     }
     return 'top-16'; // 24px from chart top
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 interface PanelContextType {
   showIndicators: boolean;
@@ -19,7 +19,7 @@ export const PanelProvider: React.FC<{ children: ReactNode; isBacktestMode: bool
   const [showIndicators, setShowIndicators] = useState(false);
   const [panelStack, setPanelStack] = useState<('indicators' | 'backtest')[]>([]);
 
-  const updatePanelStack = (panel: 'indicators' | 'backtest', show: boolean) => {
+  const updatePanelStack = useCallback((panel: 'indicators' | 'backtest', show: boolean) => {
     setPanelStack(prev => {
       // Remove panel from stack if it exists
       const filtered = prev.filter(p => p !== panel);
@@ -31,7 +31,7 @@ export const PanelProvider: React.FC<{ children: ReactNode; isBacktestMode: bool
       
       return filtered;
     });
-  };
+  }, []);
 
   return (
     <PanelContext.Provider value={{

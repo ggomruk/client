@@ -39,6 +39,22 @@ const FinancialChart = () => {
         sma2: { enabled: false, period: 200, color: '#EF4444' },
     });
 
+    // Calculate vertical offset based on panel stack for Indicators
+    const getIndicatorsTopOffset = () => {
+        const indicatorsIndex = panelStack.indexOf('indicators');
+        const backtestIndex = panelStack.indexOf('backtest');
+        
+        // If backtest is visible and should be above indicators
+        if (isBacktestMode && backtestIndex < indicatorsIndex) {
+            return 'top-[380px]';
+        }
+        return 'top-4'; // 64px from chart top (same as backtest solo position)
+    };
+
+    const getIndicatorsZIndex = () => {
+        return panelStack.indexOf('indicators') === panelStack.length - 1 ? 11 : 10;
+    };
+
     // Calculate EMA
     const calculateEMA = (data: any[], period: number): LineData[] => {
         if (data.length === 0 || period <= 0) return [];
@@ -383,10 +399,10 @@ const FinancialChart = () => {
                 {/* Floating Indicators Panel */}
                 {showIndicators && (
                     <div 
-                        className="absolute top-6 left-6 bg-[#18181b] border border-[#3f3f46] rounded-xl shadow-2xl p-6"
+                        className={`absolute ${getIndicatorsTopOffset()} left-6 bg-[#18181b] border border-[#3f3f46] rounded-xl shadow-2xl p-6`}
                         style={{ 
                             width: '512px', 
-                            zIndex: panelStack.indexOf('indicators') === panelStack.length - 1 ? 11 : 10,
+                            zIndex: getIndicatorsZIndex(),
                             maxHeight: 'calc(100vh - 400px)',
                             overflowY: 'auto'
                         }}
