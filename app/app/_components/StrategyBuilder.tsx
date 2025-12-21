@@ -63,7 +63,7 @@ export default function StrategyBuilder() {
     if (showIndicators && indicatorsIndex < backtestIndex) {
       return 'top-[300px]'; // Below indicators panel (240px height + 24px gap + 24px chart header)
     }
-    return 'top-16'; // 24px from chart top
+    return 'top-14'; // 24px from chart top
   };
 
   const getZIndex = () => {

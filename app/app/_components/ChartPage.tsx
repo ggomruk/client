@@ -140,7 +140,7 @@ export default function ChartPage() {
           </div>
 
           {/* Chart */}
-          <div className="flex-1 bg-[#18181b] overflow-hidden relative">
+          <div className="flex-1 bg-[#18181b] overflow-hidden relative" style={{ maxHeight: 'calc(100vh - 320px)' }}>
             <FinancialChart />
             
             {/* Strategy Builder Panel - Only shown in backtest mode */}

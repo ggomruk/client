@@ -19,6 +19,15 @@ const getIntervalSeconds = (interval: string): number => {
     }
 };
 
+// Normalize a kline close-time/any timestamp into the bar's *open* time (start of interval)
+// in seconds. This ensures we update the same in-progress candle instead of appending
+// duplicates within the same interval.
+const normalizeToBarStartSeconds = (tSeconds: number, interval: string): number => {
+    const s = getIntervalSeconds(interval);
+    if (!Number.isFinite(tSeconds) || tSeconds <= 0 || !Number.isFinite(s) || s <= 0) return tSeconds;
+    return Math.floor(tSeconds / s) * s;
+};
+
 interface IWebsocketProviderProps {
     children: ReactNode;
 }
@@ -45,6 +54,11 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const websocketRef = useRef<WebSocket | null>(null);
     const oldestTimestampRef = useRef<number | null>(null);
+    const intervalRef = useRef<string>(interval);
+
+    useEffect(() => {
+        intervalRef.current = interval;
+    }, [interval]);
 
     // Function to load more historical data
     const loadMoreData = async (): Promise<boolean> => {
@@ -87,8 +101,16 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     };
 
     useEffect(() => {
+        // CRITICAL: Clear old data immediately when symbol/interval changes
+        // to prevent showing stale data from previous timeframe
+        setKlineData([]);
+        setisHistoryDataFetched(false);
+        oldestTimestampRef.current = null;
+        
         const fetchData = async () => {
             try {
+                console.log(`[fetchData] Fetching new data for ${symbol} ${interval}`);
+                
                 // Fetch initial 24hr ticker data immediately
                 const tickerResponse = await axiosInstance.get('/market/ticker', {
                     params: { symbol }
@@ -118,11 +140,16 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                 });
                 
                 const data: IKlineData[] = response.data;
-                setKlineData(data);
+                // REST data should already have proper open times from the backend.
+                // Just sort and store as-is; Chart.tsx will handle normalization if needed.
+                const sorted = data.sort((a: any, b: any) => Number(a.time) - Number(b.time));
+                
+                console.log(`[fetchData] Received ${sorted.length} candles for ${symbol} ${interval}`);
+                setKlineData(sorted);
                 
                 // Track the oldest timestamp for lazy loading
-                if (data.length > 0) {
-                    oldestTimestampRef.current = data[0].time;
+                if (sorted.length > 0) {
+                    oldestTimestampRef.current = sorted[0].time;
                 }
                 
                 setisHistoryDataFetched(true);
@@ -139,6 +166,19 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
 
     useEffect(() => {
         if(!isHistoryDataFetched) return;
+
+        // If symbol/interval changes, ensure we fully tear down any previous socket
+        // before creating a new one. Otherwise, old interval messages can race in and
+        // append bars with a different cadence.
+        if (websocketRef.current) {
+            try {
+                websocketRef.current.close();
+            } catch {
+                // ignore
+            }
+            websocketRef.current = null;
+        }
+
         function connectWebsocket(onMessage: (event: MessageEvent) => void) {
             const websocketUrl = `wss://stream.binance.com:9443/ws`;
             const ws = new WebSocket(websocketUrl);
@@ -174,12 +214,18 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
         websocketRef.current = connectWebsocket((event: MessageEvent) => {
             const data = JSON.parse(event.data);
             if (data.e === "kline") {
-                const d = {
+                const currentInterval = intervalRef.current;
+                // Use Binance's open time (data.k.t) which is the bar start, not close time.
+                // This is more reliable than normalizing the close time.
+                const openTimeSeconds = data.k.t / 1000;
+                const d: any = {
                     open: parseFloat(data.k.o),
                     high: parseFloat(data.k.h),
                     low: parseFloat(data.k.l),
                     close: parseFloat(data.k.c),
-                    time: data.k.T / 1000,
+                    // Use open time (bar start) directly from Binance
+                    time: openTimeSeconds,
+                    volume: parseFloat(data.k.v),
                 };
                 setKlineData((prevData) => {
                     // check if the last data in prevData has the same time as the time of new data
@@ -189,6 +235,10 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                         const oldData = prevData.slice(0, prevData.length - 1);
                         const newData = [...oldData, d];
                         return newData;
+                    }
+                    // Guard against out-of-order websocket frames
+                    if (prevData.length && prevData[prevData.length - 1].time > d.time) {
+                        return prevData;
                     }
                     return [...prevData, d];
                 });
@@ -210,11 +260,13 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
         });
 
         return () => {
-            websocketRef.current?.close();
-            websocketRef.current = null;
-            setKlineData([]);
-            setSymbolData(null);
-            setisHistoryDataFetched(false);
+            console.log(`[cleanup] Closing websocket for ${symbol} ${interval}`);
+            if (websocketRef.current) {
+                websocketRef.current.close();
+                websocketRef.current = null;
+            }
+            // Note: We do NOT clear klineData here anymore - it's cleared at the START
+            // of the next effect to prevent showing stale data
         }
 
     }, [symbol, interval, isHistoryDataFetched]);
