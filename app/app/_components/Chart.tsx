@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react'
-import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData } from "lightweight-charts";
+import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp } from "lightweight-charts";
 import { useWebsocket } from '../_provider/binance.websocket';
 import { usePanel } from '../_provider/panel.context';
 
@@ -26,11 +26,39 @@ const FinancialChart = () => {
     const chartRef = useRef<IChartApi|null>(null);
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick">|null>(null);
     const indicatorRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map());
+
+    // Track last rendered time to prevent lightweight-charts "Cannot update oldest data" errors.
+    const lastCandleTimeRef = useRef<number | null>(null);
+    const lastIndicatorTimeRef = useRef<Map<string, number | null>>(new Map());
+
+    const toUtcTimestamp = (t: unknown): UTCTimestamp => {
+        // lightweight-charts expects seconds since epoch (number) for UTCTimestamp.
+        // We defensively handle accidental object/Date inputs.
+        if (typeof t === 'number' && Number.isFinite(t)) return t as UTCTimestamp;
+        if (typeof t === 'string') {
+            const parsed = Number(t);
+            if (Number.isFinite(parsed)) return parsed as UTCTimestamp;
+        }
+        if (t instanceof Date) return Math.floor(t.getTime() / 1000) as UTCTimestamp;
+        // Attempt to unwrap { time: ... } or similar shapes.
+        if (t && typeof t === 'object' && 'time' in (t as any)) {
+            return toUtcTimestamp((t as any).time);
+        }
+        // As a last resort, use "now" to avoid crashing the chart.
+        return Math.floor(Date.now() / 1000) as UTCTimestamp;
+    };
     const resizeObserverRef = useRef<ResizeObserver|null>(null);
     const isLoadingMoreRef = useRef<boolean>(false);
     const isInitialLoadRef = useRef<boolean>(true);
     const previousDataLengthRef = useRef<number>(0);
     const previousSymbolRef = useRef<string>(symbol);
+    const lastUpdateTimeRef = useRef<number>(0);
+
+    // TradingView-like behavior: follow latest only when user is at the right edge.
+    const shouldFollowLatestRef = useRef<boolean>(true);
+    const lastLogicalRangeRef = useRef<any>(null);
+
+    const [isFollowingLatest, setIsFollowingLatest] = useState(true);
     
     const [indicators, setIndicators] = useState<IndicatorsState>({
         ema1: { enabled: true, period: 12, color: '#F59E0B' },
@@ -153,6 +181,8 @@ const FinancialChart = () => {
                 borderColor: '#374151',
                 timeVisible: true,
                 secondsVisible: false,
+                lockVisibleTimeRangeOnResize: true,
+                rightOffset: 12,
             },
         });
 
@@ -192,7 +222,7 @@ const FinancialChart = () => {
         };
     }, []);
 
-    // Setup lazy loading for historical data
+    // Setup lazy loading for historical data + track follow-latest state
     useEffect(() => {
         if (!chartRef.current) return;
 
@@ -200,6 +230,21 @@ const FinancialChart = () => {
         
         const handleVisibleLogicalRangeChange = async (logicalRange: any) => {
             if (!logicalRange || isLoadingMoreRef.current || isLoadingMore) return;
+
+            // Track whether the user is at the right edge.
+            // Heuristic: if the visible range ends at (or beyond) the latest bar index, consider it "following".
+            try {
+                const barsInfo = candleSeriesRef.current?.barsInLogicalRange(logicalRange);
+                if (barsInfo?.barsAfter != null) {
+                    const nowFollowing = barsInfo.barsAfter <= 2;
+                    shouldFollowLatestRef.current = nowFollowing;
+                    setIsFollowingLatest(nowFollowing);
+                }
+            } catch {
+                // ignore
+            }
+
+            lastLogicalRangeRef.current = logicalRange;
 
             // Check if user scrolled close to the left edge (first 10% of visible range)
             const barsInfo = candleSeriesRef.current?.barsInLogicalRange(logicalRange);
@@ -267,37 +312,76 @@ const FinancialChart = () => {
             if (symbolChanged) {
                 isInitialLoadRef.current = true;
                 previousSymbolRef.current = symbol;
+                lastUpdateTimeRef.current = 0;
             }
             
-            // Set candlestick data
+            const currentDataLength = klineData.length;
+            const lastCandle = klineData[klineData.length - 1];
+            
+            // Determine what kind of update this is
+            const isInitialLoad = isInitialLoadRef.current;
+            const dataLengthChanged = currentDataLength !== previousDataLengthRef.current;
+            const isHistoricalDataLoad = dataLengthChanged && currentDataLength > previousDataLengthRef.current + 1;
+            const isNewCandle = lastCandle.time !== lastUpdateTimeRef.current;
+            
+            // Format all data
             const formattedData = klineData.map((item: any) => ({
-                time: item.time,
+                time: toUtcTimestamp(item.time),
                 open: item.open,
                 high: item.high,
                 low: item.low,
                 close: item.close,
             })) as CandlestickData[];
             
-            // Only use setData + fitContent on initial load or symbol change
-            // Otherwise, preserve the user's scroll position
-            if (isInitialLoadRef.current) {
+            // Decide between setData() and update()
+            if (isInitialLoad || symbolChanged || isHistoricalDataLoad) {
+                // Use setData for: initial load, symbol change, or historical data prepend
                 candleSeriesRef.current.setData(formattedData);
-                isInitialLoadRef.current = false;
+
+                // Reset last-time tracking because setData() can contain older points.
+                lastCandleTimeRef.current = formattedData.length
+                    ? (formattedData[formattedData.length - 1].time as unknown as number)
+                    : null;
                 
-                // Only auto-fit on initial load or symbol change
-                if (chartRef.current) {
-                    chartRef.current.timeScale().fitContent();
+                if (isInitialLoad) {
+                    isInitialLoadRef.current = false;
+                    // Only auto-fit on initial load
+                    if (chartRef.current) {
+                        chartRef.current.timeScale().fitContent();
+                    }
                 }
+                // For historical data load, don't call fitContent - preserve scroll
             } else {
-                // For updates (new candles or lazy-loaded data), use setData but preserve position
-                // We still need setData for lazy-loaded data to prepend old candles
-                candleSeriesRef.current.setData(formattedData);
-                // Note: We DON'T call fitContent() to preserve scroll
+                // Use update() for real-time updates (same candle or new candle)
+                const lastFormattedCandle = formattedData[formattedData.length - 1];
+                if (lastFormattedCandle) {
+                    const nextTime = lastFormattedCandle.time as unknown as number;
+                    const prevTime = lastCandleTimeRef.current;
+
+                    if (prevTime == null || nextTime >= prevTime) {
+                        candleSeriesRef.current.update(lastFormattedCandle);
+                        lastCandleTimeRef.current = nextTime;
+                    } else {
+                        // If we ever get out-of-order data (or a time type mismatch), update() will throw.
+                        // Fall back to setData() to resync the series.
+                        candleSeriesRef.current.setData(formattedData);
+                        lastCandleTimeRef.current = formattedData.length
+                            ? (formattedData[formattedData.length - 1].time as unknown as number)
+                            : null;
+                    }
+                }
+
+                // Only auto-follow the latest candle if the user is currently at the right edge.
+                if (chartRef.current && shouldFollowLatestRef.current) {
+                    chartRef.current.timeScale().scrollToRealTime();
+                }
             }
             
-            previousDataLengthRef.current = klineData.length;
+            // Update tracking refs
+            previousDataLengthRef.current = currentDataLength;
+            lastUpdateTimeRef.current = lastCandle.time;
             
-            // Calculate and set indicator data
+            // Calculate and update indicator data
             Object.entries(indicators).forEach(([key, config]) => {
                 if (config.enabled) {
                     const series = indicatorRefs.current.get(key);
@@ -311,7 +395,29 @@ const FinancialChart = () => {
                         }
                         
                         if (data.length > 0) {
-                            series.setData(data);
+                            // Use same logic as candles: setData for full updates, update for incremental
+                            if (isInitialLoad || symbolChanged || isHistoricalDataLoad) {
+                                const normalized = data.map((p) => ({ ...p, time: toUtcTimestamp(p.time) }));
+                                series.setData(normalized);
+                                lastIndicatorTimeRef.current.set(key, normalized.length ? (normalized[normalized.length - 1].time as unknown as number) : null);
+                            } else {
+                                // For real-time updates, just update the last point
+                                const lastPoint = data[data.length - 1];
+                                if (lastPoint) {
+                                    const normalizedPoint = { ...lastPoint, time: toUtcTimestamp(lastPoint.time) };
+                                    const nextTime = normalizedPoint.time as unknown as number;
+                                    const prevTime = lastIndicatorTimeRef.current.get(key) ?? null;
+
+                                    if (prevTime == null || nextTime >= prevTime) {
+                                        series.update(normalizedPoint);
+                                        lastIndicatorTimeRef.current.set(key, nextTime);
+                                    } else {
+                                        const normalized = data.map((p) => ({ ...p, time: toUtcTimestamp(p.time) }));
+                                        series.setData(normalized);
+                                        lastIndicatorTimeRef.current.set(key, normalized.length ? (normalized[normalized.length - 1].time as unknown as number) : null);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -372,6 +478,21 @@ const FinancialChart = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Live button: jump back to real-time and re-enable follow */}
+                    {!isFollowingLatest && (
+                        <button
+                            onClick={() => {
+                                if (!chartRef.current) return;
+                                shouldFollowLatestRef.current = true;
+                                setIsFollowingLatest(true);
+                                chartRef.current.timeScale().scrollToRealTime();
+                            }}
+                            className="px-2.5 py-1 text-xs font-medium rounded transition-all bg-primary-400 text-white"
+                            title="Jump to latest"
+                        >
+                            Live
+                        </button>
+                    )}
                     {/* Indicators Button */}
                     <button
                         onClick={() => {
