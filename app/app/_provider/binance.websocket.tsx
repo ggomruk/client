@@ -89,6 +89,25 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Fetch initial 24hr ticker data immediately
+                const tickerResponse = await axiosInstance.get('/market/ticker', {
+                    params: { symbol }
+                });
+                
+                if (tickerResponse.data) {
+                    setSymbolData({
+                        eventTime: Date.now(),
+                        symbol: tickerResponse.data.symbol,
+                        priceChange: parseFloat(tickerResponse.data.priceChange),
+                        priceChangePercent: parseFloat(tickerResponse.data.priceChangePercent),
+                        lastPrice: parseFloat(tickerResponse.data.lastPrice),
+                        openPrice: parseFloat(tickerResponse.data.openPrice),
+                        highPrice: parseFloat(tickerResponse.data.highPrice),
+                        lowPrice: parseFloat(tickerResponse.data.lowPrice),
+                        quantity: parseFloat(tickerResponse.data.volume),
+                    });
+                }
+                
                 // Fetch from YOUR API server, not Binance directly
                 const response = await axiosInstance.get('/market/klines', {
                     params: {
