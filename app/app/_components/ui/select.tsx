@@ -31,6 +31,7 @@ export function Select({
   const containerRef = useRef<HTMLDivElement>(null);
   
   const selectedOption = options.find(opt => opt.value === value);
+  const shouldFloat = focused || !!selectedOption;
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -49,7 +50,7 @@ export function Select({
       <div className="relative">
         {label && (
           <label className={`absolute left-4 transition-all duration-300 pointer-events-none z-10
-            ${focused || selectedOption 
+            ${shouldFloat
               ? "top-0 -translate-y-1/2 text-xs bg-[#27272a] px-2 text-[#7c3aed]" 
               : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa]"}`}
           >
@@ -64,7 +65,8 @@ export function Select({
             setFocused(true);
           }}
           className={`w-full bg-[#27272a] border rounded-lg px-4 text-left flex items-center justify-between transition-all duration-300
-            ${label ? "pt-6 pb-2 h-[52px]" : "py-3 h-[48px]"}
+            ${label ? "h-[52px]" : "h-[48px]"}
+            py-3
             ${error ? "border-[#ff6467]" : focused ? "border-[#7c3aed] shadow-[0_0_0_3px_rgba(124,58,237,0.1)]" : "border-[#3f3f46]"}
             focus:outline-none`}
         >

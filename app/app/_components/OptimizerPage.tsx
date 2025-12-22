@@ -36,6 +36,40 @@ const intervals = [
   { value: "1d", label: "1 Day" }
 ];
 
+const tradingPairs = [
+  { value: "BTC/USDT", label: "BTC/USDT" },
+  { value: "ETH/USDT", label: "ETH/USDT" },
+  { value: "SOL/USDT", label: "SOL/USDT" },
+  { value: "XRP/USDT", label: "XRP/USDT" },
+  { value: "DOGE/USDT", label: "DOGE/USDT" }
+];
+
+const strategyParameters: Record<string, { value: string; label: string }[]> = {
+  macd: [
+    { value: "fast_period", label: "Fast Period" },
+    { value: "slow_period", label: "Slow Period" },
+    { value: "signal_period", label: "Signal Period" }
+  ],
+  rsi: [
+    { value: "period", label: "Period" },
+    { value: "overbought", label: "Overbought Level" },
+    { value: "oversold", label: "Oversold Level" }
+  ],
+  bollinger: [
+    { value: "period", label: "Period" },
+    { value: "std_dev", label: "Standard Deviation" }
+  ],
+  sma: [
+    { value: "fast_period", label: "Fast Period" },
+    { value: "slow_period", label: "Slow Period" }
+  ],
+  stochastic: [
+    { value: "k_period", label: "K Period" },
+    { value: "d_period", label: "D Period" },
+    { value: "slowing", label: "Slowing" }
+  ]
+};
+
 export function OptimizerPage() {
   const [symbol, setSymbol] = useState("");
   const [timeInterval, setTimeInterval] = useState("");
@@ -131,11 +165,11 @@ export function OptimizerPage() {
           <h3 className="text-xl font-bold text-[#fafafa] mb-6">Configuration</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <Input
+            <Select
               label="Trading Pair"
+              options={tradingPairs}
               value={symbol}
               onChange={setSymbol}
-              required
             />
             
             <Select
@@ -189,8 +223,9 @@ export function OptimizerPage() {
               {parameters.map((param, index) => (
                 <div key={index} className="glass rounded-lg p-4 animate-slideIn">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <Input
+                    <Select
                       placeholder="Parameter name"
+                      options={strategyParameters[strategy] || []}
                       value={param.name}
                       onChange={(value) => updateParameter(index, "name", value)}
                     />
