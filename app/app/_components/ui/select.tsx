@@ -50,7 +50,7 @@ export function Select({
   
   return (
     <div className={cn("w-full", className)} ref={containerRef}>
-      <div className="relative">
+      <div className={cn("relative", isOpen ? "z-50" : "")}>
         {/* Text Label */}
         {label && (
           <label className={cn(

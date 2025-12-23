@@ -84,15 +84,16 @@ export function OptimizerPage() {
   const [strategy, setStrategy] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [parameters, setParameters] = useState<ParameterRange[]>([
-    { name: "fast_period", min: "8", max: "15", step: "1" },
-    { name: "slow_period", min: "20", max: "30", step: "2" },
-    { name: "signal_period", min: "7", max: "12", step: "1" }
-  ]);
+  const [parameters, setParameters] = useState<ParameterRange[]>([]);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<OptimizerResult[] | null>(null);
   const [bestResult, setBestResult] = useState<OptimizerResult | null>(null);
+
+  const handleStrategyChange = (value: string) => {
+    setStrategy(value);
+    setParameters([]); // Reset parameters when strategy changes
+  };
 
   const addParameter = () => {
     setParameters([...parameters, { name: "", min: "", max: "", step: "1" }]);
@@ -295,7 +296,7 @@ export function OptimizerPage() {
               label="Strategy"
               options={strategies}
               value={strategy}
-              onChange={setStrategy}
+              onChange={handleStrategyChange}
             />
           </div>
 
@@ -308,51 +309,68 @@ export function OptimizerPage() {
                 size="sm"
                 leftIcon={<Plus className="w-4 h-4" />}
                 onClick={addParameter}
+                disabled={!strategy || (strategyParameters[strategy] && parameters.length >= strategyParameters[strategy].length)}
               >
                 Add Parameter
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {parameters.map((param, index) => (
-                <div key={index} className="glass rounded-lg p-4 animate-slideIn">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <Select
-                      placeholder="Select parameter"
-                      options={strategyParameters[strategy] || []}
-                      value={param.name}
-                      onChange={(value) => updateParameter(index, "name", value)}
-                    />
-                    <Input
-                      label="Start"
-                      type="number"
-                      value={param.min}
-                      onChange={(value) => updateParameter(index, "min", value)}
-                    />
-                    <Input
-                      label="End"
-                      type="number"
-                      value={param.max}
-                      onChange={(value) => updateParameter(index, "max", value)}
-                    />
-                    <div className="flex gap-2">
-                      <Input
-                        label="Step"
-                        type="number"
-                        value={param.step}
-                        onChange={(value) => updateParameter(index, "step", value)}
+            {!strategy ? (
+              <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#3f3f46] rounded-lg bg-[#27272a]/20">
+                <Sliders className="w-8 h-8 text-[#a1a1aa] mb-2 opacity-50" />
+                <p className="text-sm text-[#a1a1aa]">Please select a strategy first to configure parameters</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {parameters.map((param, index) => (
+                  <div 
+                    key={index} 
+                    className="glass rounded-lg p-4 animate-slideIn relative"
+                    style={{ zIndex: parameters.length - index }}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <Select
+                        label="Parameter"
+                        options={strategyParameters[strategy] || []}
+                        value={param.name}
+                        onChange={(value) => updateParameter(index, "name", value)}
                       />
-                      <button
-                        onClick={() => removeParameter(index)}
-                        className="px-3 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors mt-1"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      <Input
+                        label="Start"
+                        type="number"
+                        value={param.min}
+                        onChange={(value) => updateParameter(index, "min", value)}
+                      />
+                      <Input
+                        label="End"
+                        type="number"
+                        value={param.max}
+                        onChange={(value) => updateParameter(index, "max", value)}
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          label="Step"
+                          type="number"
+                          value={param.step}
+                          onChange={(value) => updateParameter(index, "step", value)}
+                        />
+                        <button
+                          onClick={() => removeParameter(index)}
+                          className="px-3 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors mt-1"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+                {parameters.length === 0 && (
+                  <div className="text-center p-4 text-sm text-[#a1a1aa] italic">
+                    No parameters added. Click "Add Parameter" to start.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <Button
