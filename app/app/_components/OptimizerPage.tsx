@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sliders, Plus, X, Trophy, Download, TrendingUp, TrendingDown, Activity, Info } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -12,6 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { useServerWebsocket } from "@/app/app/_provider/server.websocket";
+import { toast } from "sonner";
+import axiosInstance from "../_api/axios";
 
 interface ParameterRange {
   name: string;
@@ -85,6 +89,9 @@ const strategyParameters: Record<string, { value: string; label: string }[]> = {
 };
 
 export function OptimizerPage() {
+  const { user, token } = useAuth();
+  const { socket } = useServerWebsocket();
+  
   const [symbol, setSymbol] = useState("");
   const [timeInterval, setTimeInterval] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -97,6 +104,56 @@ export function OptimizerPage() {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<OptimizerResult[] | null>(null);
   const [bestResult, setBestResult] = useState<OptimizerResult | null>(null);
+  const [optimizationId, setOptimizationId] = useState<string | null>(null);
+
+  // WebSocket listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleProgress = (data: any) => {
+      if (data.optimizationId === optimizationId) {
+        setProgress(Math.round(data.progress));
+      }
+    };
+
+    const handleComplete = (data: any) => {
+      if (data.optimizationId === optimizationId) {
+        setIsOptimizing(false);
+        setProgress(100);
+        
+        // Process results
+        if (data.topResults && Array.isArray(data.topResults)) {
+          const processedResults: OptimizerResult[] = data.topResults.map((item: any, index: number) => {
+            // Extract performance metrics safely
+            const perf = item.result?.performance || {};
+            
+            return {
+              parameters: item.config?.combination || {},
+              totalReturn: parseFloat((perf.total_return * 100).toFixed(2)) || 0,
+              sharpeRatio: parseFloat(perf.sharpe_ratio?.toFixed(2)) || 0,
+              maxDrawdown: parseFloat((perf.max_drawdown * 100).toFixed(2)) || 0,
+              profitFactor: parseFloat(perf.profit_factor?.toFixed(2)) || 0,
+              rank: index + 1
+            };
+          });
+          
+          setResults(processedResults);
+          if (processedResults.length > 0) {
+            setBestResult(processedResults[0]);
+          }
+          toast.success("Optimization completed successfully!");
+        }
+      }
+    };
+
+    socket.on('optimization:progress', handleProgress);
+    socket.on('optimization:complete', handleComplete);
+
+    return () => {
+      socket.off('optimization:progress', handleProgress);
+      socket.off('optimization:complete', handleComplete);
+    };
+  }, [socket, optimizationId]);
 
   const addStrategy = () => {
     setStrategiesConfig([
@@ -146,52 +203,60 @@ export function OptimizerPage() {
     ));
   };
 
-  const startOptimization = () => {
+  const startOptimization = async () => {
+    if (!symbol || !timeInterval || !startDate || !endDate) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate strategies
+    const invalidStrategies = strategiesConfig.filter(s => !s.type || s.parameters.length === 0);
+    if (invalidStrategies.length > 0) {
+      toast.error("Please configure all strategies with at least one parameter range");
+      return;
+    }
+
     setIsOptimizing(true);
     setProgress(0);
-    
-    // Simulate optimization progress
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 5;
-      setProgress(currentProgress);
-      
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setIsOptimizing(false);
-        
-        // Generate mock results
-        const mockResults: OptimizerResult[] = [
-          {
-            parameters: { fast_period: 12, slow_period: 26, signal_period: 9 },
-            totalReturn: 24.86,
-            sharpeRatio: 1.84,
-            maxDrawdown: -8.4,
-            profitFactor: 2.34,
-            rank: 1
-          },
-          {
-            parameters: { fast_period: 10, slow_period: 24, signal_period: 8 },
-            totalReturn: 22.45,
-            sharpeRatio: 1.72,
-            maxDrawdown: -9.2,
-            profitFactor: 2.18,
-            rank: 2
-          },
-          {
-            parameters: { fast_period: 14, slow_period: 28, signal_period: 10 },
-            totalReturn: 19.67,
-            sharpeRatio: 1.65,
-            maxDrawdown: -7.8,
-            profitFactor: 2.05,
-            rank: 3
-          }
-        ];
-        
-        setResults(mockResults);
-        setBestResult(mockResults[0]);
+    setResults(null);
+    setBestResult(null);
+
+    try {
+      const payload = {
+        symbol,
+        interval: timeInterval,
+        startDate,
+        endDate,
+        strategies: strategiesConfig.map(s => ({
+          id: s.id,
+          type: s.type,
+          parameters: s.parameters.map(p => ({
+            name: p.name,
+            min: parseFloat(p.min),
+            max: parseFloat(p.max),
+            step: parseFloat(p.step)
+          }))
+        }))
+      };
+
+      const response = await axiosInstance.post(
+        `/algo/optimize`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (response.data && response.data.optimizationId) {
+        setOptimizationId(response.data.optimizationId);
+        toast.info("Optimization started...");
       }
-    }, 100);
+
+    } catch (error) {
+      console.error("Optimization failed:", error);
+      toast.error("Failed to start optimization");
+      setIsOptimizing(false);
+    }
   };
 
   return (
