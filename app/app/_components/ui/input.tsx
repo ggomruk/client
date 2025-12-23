@@ -43,8 +43,8 @@ export function Input({
         {label && (
           <label className={`absolute left-4 transition-all duration-300 pointer-events-none z-10
             ${shouldFloat
-              ? "top-0 -translate-y-1/2 text-xs bg-[#27272a] px-2 text-[#7c3aed]" 
-              : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa]"}
+              ? "top-0 -translate-y-1/2 text-xs bg-[#141414] px-2 text-[#7c3aed] rounded-md" 
+              : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa] rounded-md"}
             ${leftIcon && !shouldFloat ? "left-10" : ""}`}
           >
             {label} {required && <span className="text-[#ff6467]">*</span>}
@@ -72,7 +72,7 @@ export function Input({
             // Only show placeholder color when placeholder exists
             placeholder ? "placeholder-[#71717a]" : "",
             leftIcon && "pl-10",
-            rightIcon && "pr-10",
+            // rightIcon && "pr-10",
             error ? "border-[#ff6467]" : focused ? "border-[#7c3aed] shadow-[0_0_0_3px_rgba(124,58,237,0.1)]" : "border-[#3f3f46]",
             disabled && "opacity-50 cursor-not-allowed",
             // Style the date picker calendar icon
