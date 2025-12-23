@@ -20,6 +20,12 @@ interface ParameterRange {
   step: string;
 }
 
+interface StrategyConfig {
+  id: string;
+  type: string;
+  parameters: ParameterRange[];
+}
+
 interface OptimizerResult {
   parameters: Record<string, number>;
   totalReturn: number;
@@ -81,32 +87,63 @@ const strategyParameters: Record<string, { value: string; label: string }[]> = {
 export function OptimizerPage() {
   const [symbol, setSymbol] = useState("");
   const [timeInterval, setTimeInterval] = useState("");
-  const [strategy, setStrategy] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [parameters, setParameters] = useState<ParameterRange[]>([]);
+  // Initialize with one empty strategy block
+  const [strategiesConfig, setStrategiesConfig] = useState<StrategyConfig[]>([
+    { id: "init", type: "", parameters: [] }
+  ]);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<OptimizerResult[] | null>(null);
   const [bestResult, setBestResult] = useState<OptimizerResult | null>(null);
 
-  const handleStrategyChange = (value: string) => {
-    setStrategy(value);
-    setParameters([]); // Reset parameters when strategy changes
+  const addStrategy = () => {
+    setStrategiesConfig([
+      ...strategiesConfig,
+      { id: Math.random().toString(36).substr(2, 9), type: "", parameters: [] }
+    ]);
   };
 
-  const addParameter = () => {
-    setParameters([...parameters, { name: "", min: "", max: "", step: "1" }]);
+  const removeStrategy = (id: string) => {
+    if (strategiesConfig.length > 1) {
+      setStrategiesConfig(strategiesConfig.filter(s => s.id !== id));
+    }
   };
 
-  const removeParameter = (index: number) => {
-    setParameters(parameters.filter((_, i) => i !== index));
+  const updateStrategyType = (id: string, type: string) => {
+    setStrategiesConfig(strategiesConfig.map(s => 
+      s.id === id ? { ...s, type, parameters: [] } : s
+    ));
   };
 
-  const updateParameter = (index: number, field: keyof ParameterRange, value: string) => {
-    const updated = [...parameters];
-    updated[index][field] = value;
-    setParameters(updated);
+  const addParameter = (strategyId: string) => {
+    setStrategiesConfig(strategiesConfig.map(s => 
+      s.id === strategyId 
+        ? { ...s, parameters: [...s.parameters, { name: "", min: "", max: "", step: "1" }] }
+        : s
+    ));
+  };
+
+  const removeParameter = (strategyId: string, index: number) => {
+    setStrategiesConfig(strategiesConfig.map(s => 
+      s.id === strategyId 
+        ? { ...s, parameters: s.parameters.filter((_, i) => i !== index) }
+        : s
+    ));
+  };
+
+  const updateParameter = (strategyId: string, index: number, field: keyof ParameterRange, value: string) => {
+    setStrategiesConfig(strategiesConfig.map(s => 
+      s.id === strategyId 
+        ? {
+            ...s,
+            parameters: s.parameters.map((p, i) => 
+              i === index ? { ...p, [field]: value } : p
+            )
+          }
+        : s
+    ));
   };
 
   const startOptimization = () => {
@@ -291,86 +328,127 @@ export function OptimizerPage() {
             />
           </div>
 
-          <div className="mb-6">
-            <Select
-              label="Strategy"
-              options={strategies}
-              value={strategy}
-              onChange={handleStrategyChange}
-            />
-          </div>
-
-          {/* Parameter Ranges */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-semibold text-[#fafafa]">Parameter Ranges</h4>
+          {/* Strategies Configuration */}
+          <div className="space-y-8 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-[#fafafa]">Strategies</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 leftIcon={<Plus className="w-4 h-4" />}
-                onClick={addParameter}
-                disabled={!strategy || (strategyParameters[strategy] && parameters.length >= strategyParameters[strategy].length)}
+                onClick={addStrategy}
+                disabled={strategiesConfig.length >= strategies.length}
               >
-                Add Parameter
+                Add Strategy
               </Button>
             </div>
 
-            {!strategy ? (
-              <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#3f3f46] rounded-lg bg-[#27272a]/20">
-                <Sliders className="w-8 h-8 text-[#a1a1aa] mb-2 opacity-50" />
-                <p className="text-sm text-[#a1a1aa]">Please select a strategy first to configure parameters</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {parameters.map((param, index) => (
-                  <div 
-                    key={index} 
-                    className="glass rounded-lg p-4 animate-slideIn relative"
-                    style={{ zIndex: parameters.length - index }}
+            {strategiesConfig.map((config, strategyIndex) => {
+              // Filter out strategies that are already selected in other blocks
+              const otherSelectedTypes = strategiesConfig
+                .filter(s => s.id !== config.id)
+                .map(s => s.type)
+                .filter(Boolean);
+                
+              const availableStrategies = strategies.filter(s => !otherSelectedTypes.includes(s.value));
+
+              return (
+              <div key={config.id} className="p-4 border border-[#3f3f46] rounded-lg bg-[#27272a]/30 animate-slideIn">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1 mr-4">
+                    <Select
+                      label={`Strategy #${strategyIndex + 1}`}
+                      options={availableStrategies}
+                      value={config.type}
+                      onChange={(value) => updateStrategyType(config.id, value)}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-400 hover:bg-red-900/20 mt-1"
+                    onClick={() => removeStrategy(config.id)}
+                    disabled={strategiesConfig.length === 1}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <Select
-                        label="Parameter"
-                        options={strategyParameters[strategy] || []}
-                        value={param.name}
-                        onChange={(value) => updateParameter(index, "name", value)}
-                      />
-                      <Input
-                        label="Start"
-                        type="number"
-                        value={param.min}
-                        onChange={(value) => updateParameter(index, "min", value)}
-                      />
-                      <Input
-                        label="End"
-                        type="number"
-                        value={param.max}
-                        onChange={(value) => updateParameter(index, "max", value)}
-                      />
-                      <div className="flex gap-2">
-                        <Input
-                          label="Step"
-                          type="number"
-                          value={param.step}
-                          onChange={(value) => updateParameter(index, "step", value)}
-                        />
-                        <button
-                          onClick={() => removeParameter(index)}
-                          className="px-3 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors mt-1"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+
+                {/* Parameter Ranges for this Strategy */}
+                <div className="mb-2">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-[#fafafa]">Parameter Ranges</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      leftIcon={<Plus className="w-4 h-4" />}
+                      onClick={() => addParameter(config.id)}
+                      disabled={!config.type || (strategyParameters[config.type] && config.parameters.length >= strategyParameters[config.type].length)}
+                    >
+                      Add Parameter
+                    </Button>
+                  </div>
+
+                  {!config.type ? (
+                    <div className="flex flex-col items-center justify-center p-6 border border-dashed border-[#3f3f46] rounded-lg bg-[#27272a]/20">
+                      <Sliders className="w-6 h-6 text-[#a1a1aa] mb-2 opacity-50" />
+                      <p className="text-xs text-[#a1a1aa]">Select a strategy type above</p>
                     </div>
-                  </div>
-                ))}
-                {parameters.length === 0 && (
-                  <div className="text-center p-4 text-sm text-[#a1a1aa] italic">
-                    No parameters added. Click "Add Parameter" to start.
-                  </div>
-                )}
+                  ) : (
+                    <div className="space-y-3">
+                      {config.parameters.map((param, paramIndex) => (
+                        <div 
+                          key={paramIndex} 
+                          className="glass rounded-lg p-4 animate-slideIn relative"
+                          style={{ zIndex: config.parameters.length - paramIndex }}
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <Select
+                              label="Parameter"
+                              options={strategyParameters[config.type] || []}
+                              value={param.name}
+                              onChange={(value) => updateParameter(config.id, paramIndex, "name", value)}
+                            />
+                            <Input
+                              label="Start"
+                              type="number"
+                              value={param.min}
+                              onChange={(value) => updateParameter(config.id, paramIndex, "min", value)}
+                            />
+                            <Input
+                              label="End"
+                              type="number"
+                              value={param.max}
+                              onChange={(value) => updateParameter(config.id, paramIndex, "max", value)}
+                            />
+                            <div className="flex gap-2">
+                              <Input
+                                label="Step"
+                                type="number"
+                                value={param.step}
+                                onChange={(value) => updateParameter(config.id, paramIndex, "step", value)}
+                              />
+                              <button
+                                onClick={() => removeParameter(config.id, paramIndex)}
+                                className="px-3 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors mt-1"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {config.parameters.length === 0 && (
+                        <div className="text-center p-4 text-sm text-[#a1a1aa] italic">
+                          No parameters added. Click "Add Parameter" to start.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+            );
+          })}
           </div>
 
           <Button
