@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Sliders, Plus, X, Trophy, Download, TrendingUp, TrendingDown, Activity, Info } from "lucide-react";
+import { Sliders, Plus, X, Trophy, Download, TrendingUp, TrendingDown, Activity, Info, History as HistoryIcon } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -16,6 +16,7 @@ import { useAuth } from "@/app/contexts/AuthContext";
 import { useServerWebsocket } from "@/app/app/_provider/server.websocket";
 import { toast } from "sonner";
 import axiosInstance from "../_api/axios";
+import { OptimizationHistory } from "./OptimizationHistory";
 
 interface ParameterRange {
   name: string;
@@ -305,96 +306,117 @@ export function OptimizerPage() {
     }
   };
 
+  const handleLoadResult = (data: any) => {
+    setBestResult(data.best);
+    setResults(data.all);
+    toast.success("Loaded optimization results");
+  };
+
   return (
     <div className="overflow-y-auto p-8">
       {/* Page Header */}
       <div className="mb-8 animate-fadeIn">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-[30px] font-bold gradient-text leading-[36px]">
-            Strategy Optimizer
-          </h1>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                <Info className="h-5 w-5" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-[#18181b] border-[#27272a] text-[#fafafa]">
-              <DialogHeader>
-                <DialogTitle className="text-[#7c3aed] text-xl">The Core Concept: "Grid Search"</DialogTitle>
-                <DialogDescription className="text-[#a1a1aa]">
-                  Understanding how the Strategy Optimizer works.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-6 mt-4">
-                <div>
-                  <p className="text-sm text-[#a1a1aa] leading-relaxed">
-                    Imagine you have a Moving Average strategy. You don't know if 50/200 is the best combination. Maybe 40/180 is better? Maybe 10/50?
-                    <br /><br />
-                    Optimization is simply running <strong>hundreds of backtests automatically</strong> with different parameter combinations to find the one that makes the most money (or has the lowest risk).
-                  </p>
-                </div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-[30px] font-bold gradient-text leading-[36px]">
+              Strategy Optimizer
+            </h1>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                  <Info className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-[#18181b] border-[#27272a] text-[#fafafa]">
+                <DialogHeader>
+                  <DialogTitle className="text-[#7c3aed] text-xl">The Core Concept: "Grid Search"</DialogTitle>
+                  <DialogDescription className="text-[#a1a1aa]">
+                    Understanding how the Strategy Optimizer works.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6 mt-4">
+                  <div>
+                    <p className="text-sm text-[#a1a1aa] leading-relaxed">
+                      Imagine you have a Moving Average strategy. You don't know if 50/200 is the best combination. Maybe 40/180 is better? Maybe 10/50?
+                      <br /><br />
+                      Optimization is simply running <strong>hundreds of backtests automatically</strong> with different parameter combinations to find the one that makes the most money (or has the lowest risk).
+                    </p>
+                  </div>
 
-                <div>
-                  <h4 className="font-bold text-lg text-[#fafafa] mb-3">How It Works (The Flow)</h4>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-[#27272a] p-4 rounded-lg">
-                      <h5 className="font-semibold text-[#7c3aed] mb-2">Step A: The Inputs (UI)</h5>
-                      <p className="text-sm text-[#a1a1aa] mb-2">Instead of entering a single number, you enter a <strong>Range</strong>:</p>
-                      <div className="grid grid-cols-2 gap-4 text-xs font-mono bg-[#18181b] p-3 rounded border border-[#3f3f46]">
-                        <div>
-                          <div className="text-[#fafafa] font-bold mb-1">Parameter 1 (Fast MA):</div>
-                          <div>Start: 10</div>
-                          <div>End: 50</div>
-                          <div>Step: 10</div>
-                          <div className="text-green-400 mt-1">Values: [10, 20, 30, 40, 50]</div>
-                        </div>
-                        <div>
-                          <div className="text-[#fafafa] font-bold mb-1">Parameter 2 (Slow MA):</div>
-                          <div>Start: 100</div>
-                          <div>End: 200</div>
-                          <div>Step: 50</div>
-                          <div className="text-green-400 mt-1">Values: [100, 150, 200]</div>
+                  <div>
+                    <h4 className="font-bold text-lg text-[#fafafa] mb-3">How It Works (The Flow)</h4>
+                    
+                    <div className="space-y-4">
+                      <div className="bg-[#27272a] p-4 rounded-lg">
+                        <h5 className="font-semibold text-[#7c3aed] mb-2">Step A: The Inputs (UI)</h5>
+                        <p className="text-sm text-[#a1a1aa] mb-2">Instead of entering a single number, you enter a <strong>Range</strong>:</p>
+                        <div className="grid grid-cols-2 gap-4 text-xs font-mono bg-[#18181b] p-3 rounded border border-[#3f3f46]">
+                          <div>
+                            <div className="text-[#fafafa] font-bold mb-1">Parameter 1 (Fast MA):</div>
+                            <div>Start: 10</div>
+                            <div>End: 50</div>
+                            <div>Step: 10</div>
+                            <div className="text-green-400 mt-1">Values: [10, 20, 30, 40, 50]</div>
+                          </div>
+                          <div>
+                            <div className="text-[#fafafa] font-bold mb-1">Parameter 2 (Slow MA):</div>
+                            <div>Start: 100</div>
+                            <div>End: 200</div>
+                            <div>Step: 50</div>
+                            <div className="text-green-400 mt-1">Values: [100, 150, 200]</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="bg-[#27272a] p-4 rounded-lg">
-                      <h5 className="font-semibold text-[#7c3aed] mb-2">Step B: The Combinations</h5>
-                      <p className="text-sm text-[#a1a1aa] mb-2">The system calculates every possible combination (Cartesian Product):</p>
-                      <ul className="text-xs font-mono text-[#a1a1aa] list-disc pl-4 space-y-1">
-                        <li>Fast 10, Slow 100</li>
-                        <li>Fast 10, Slow 150</li>
-                        <li>Fast 10, Slow 200</li>
-                        <li>Fast 20, Slow 100</li>
-                        <li className="italic">...and so on</li>
-                      </ul>
-                      <div className="mt-2 text-xs font-bold text-[#fafafa]">Total Backtests = 5 x 3 = 15 backtests</div>
-                    </div>
+                      <div className="bg-[#27272a] p-4 rounded-lg">
+                        <h5 className="font-semibold text-[#7c3aed] mb-2">Step B: The Combinations</h5>
+                        <p className="text-sm text-[#a1a1aa] mb-2">The system calculates every possible combination (Cartesian Product):</p>
+                        <ul className="text-xs font-mono text-[#a1a1aa] list-disc pl-4 space-y-1">
+                          <li>Fast 10, Slow 100</li>
+                          <li>Fast 10, Slow 150</li>
+                          <li>Fast 10, Slow 200</li>
+                          <li>Fast 20, Slow 100</li>
+                          <li className="italic">...and so on</li>
+                        </ul>
+                        <div className="mt-2 text-xs font-bold text-[#fafafa]">Total Backtests = 5 x 3 = 15 backtests</div>
+                      </div>
 
-                    <div className="bg-[#27272a] p-4 rounded-lg">
-                      <h5 className="font-semibold text-[#7c3aed] mb-2">Step C: The Ranking</h5>
-                      <p className="text-sm text-[#a1a1aa] mb-2">The system ranks all results to find the best performing parameters:</p>
-                      <div className="space-y-1 text-xs font-mono">
-                        <div className="flex justify-between text-green-400">
-                          <span>Rank #1: Fast 20 / Slow 150</span>
-                          <span>Profit: +120%</span>
-                        </div>
-                        <div className="flex justify-between text-green-500/80">
-                          <span>Rank #2: Fast 30 / Slow 150</span>
-                          <span>Profit: +110%</span>
-                        </div>
-                        <div className="flex justify-between text-red-400/80">
-                          <span>Rank #15: Fast 50 / Slow 100</span>
-                          <span>Profit: -5%</span>
+                      <div className="bg-[#27272a] p-4 rounded-lg">
+                        <h5 className="font-semibold text-[#7c3aed] mb-2">Step C: The Ranking</h5>
+                        <p className="text-sm text-[#a1a1aa] mb-2">The system ranks all results to find the best performing parameters:</p>
+                        <div className="space-y-1 text-xs font-mono">
+                          <div className="flex justify-between text-green-400">
+                            <span>Rank #1: Fast 20 / Slow 150</span>
+                            <span>Profit: +120%</span>
+                          </div>
+                          <div className="flex justify-between text-green-500/80">
+                            <span>Rank #2: Fast 30 / Slow 150</span>
+                            <span>Profit: +110%</span>
+                          </div>
+                          <div className="flex justify-between text-red-400/80">
+                            <span>Rank #15: Fast 50 / Slow 100</span>
+                            <span>Profit: -5%</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                <HistoryIcon className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-[#18181b] border-[#27272a] text-[#fafafa]">
+              <DialogHeader>
+                <DialogTitle className="text-[#7c3aed] text-xl">Optimization History</DialogTitle>
+              </DialogHeader>
+              <OptimizationHistory onLoadResult={handleLoadResult} />
             </DialogContent>
           </Dialog>
         </div>

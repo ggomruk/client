@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ClipboardList, Trophy, Download } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+import { backtestService } from "../_api/backtest.service";
 
 interface Backtest {
   id: string;
@@ -10,6 +11,7 @@ interface Backtest {
   symbol: string;
   date: string;
   selected: boolean;
+  result?: any;
 }
 
 interface Metric {
@@ -29,25 +31,41 @@ interface ComparisonResult {
 }
 
 export function ComparePage() {
-  const [backtests, setBacktests] = useState<Backtest[]>([
-    { id: "1", name: "MACD Strategy", strategy: "MACD", symbol: "BTCUSDT", date: "Jan 15, 2024", selected: false },
-    { id: "2", name: "RSI Strategy", strategy: "RSI", symbol: "BTCUSDT", date: "Jan 16, 2024", selected: false },
-    { id: "3", name: "Bollinger Strategy", strategy: "Bollinger Bands", symbol: "ETHUSDT", date: "Jan 17, 2024", selected: false },
-    { id: "4", name: "SMA Crossover", strategy: "SMA", symbol: "BTCUSDT", date: "Jan 18, 2024", selected: false },
-  ]);
+  const [backtests, setBacktests] = useState<Backtest[]>([]);
 
   const [metrics, setMetrics] = useState<Metric[]>([
     { id: "total_return", name: "Total Return", description: "Overall profit/loss percentage", selected: true },
     { id: "sharpe_ratio", name: "Sharpe Ratio", description: "Risk-adjusted return metric", selected: true },
-    { id: "max_drawdown", name: "Max Drawdown", description: "Largest peak-to-trough decline", selected: true },
-    { id: "profit_factor", name: "Profit Factor", description: "Ratio of gross profit to gross loss", selected: false },
-    { id: "win_rate", name: "Win Rate", description: "Percentage of winning trades", selected: false },
+    // { id: "max_drawdown", name: "Max Drawdown", description: "Largest peak-to-trough decline", selected: true },
+    // { id: "profit_factor", name: "Profit Factor", description: "Ratio of gross profit to gross loss", selected: false },
+    // { id: "win_rate", name: "Win Rate", description: "Percentage of winning trades", selected: false },
     { id: "total_trades", name: "Total Trades", description: "Number of executed trades", selected: false },
   ]);
 
   const [results, setResults] = useState<ComparisonResult[] | null>(null);
   const [bestStrategy, setBestStrategy] = useState<ComparisonResult | null>(null);
   const [isComparing, setIsComparing] = useState(false);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const history = await backtestService.getHistory();
+        const mappedHistory = history.map(h => ({
+          id: h.id,
+          name: h.name,
+          strategy: h.strategy,
+          symbol: h.symbol,
+          date: new Date(h.date).toLocaleDateString(),
+          selected: false,
+          result: h.result
+        }));
+        setBacktests(mappedHistory);
+      } catch (error) {
+        console.error("Failed to fetch backtest history", error);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   const toggleBacktest = (id: string) => {
     setBacktests(backtests.map(b => b.id === id ? { ...b, selected: !b.selected } : b));
@@ -65,36 +83,54 @@ export function ComparePage() {
     setIsComparing(true);
     
     setTimeout(() => {
-      // Generate mock comparison results
-      const mockResults: ComparisonResult[] = backtests
-        .filter(b => b.selected)
-        .map((b, index) => ({
+      const selectedBacktests = backtests.filter(b => b.selected);
+      
+      const comparisonResults: ComparisonResult[] = selectedBacktests.map(b => {
+        const perf = b.result?.performance || {};
+        const metrics: Record<string, number> = {
+          total_return: perf.cstrategy ? parseFloat(perf.cstrategy.toFixed(2)) : 0,
+          sharpe_ratio: perf.sharpe ? parseFloat(perf.sharpe.toFixed(2)) : 0,
+          max_drawdown: 0, 
+          profit_factor: 0, 
+          win_rate: 0, 
+          total_trades: perf.trades || 0,
+        };
+        
+        return {
           backtestId: b.id,
           name: b.name,
           strategy: b.strategy,
-          metrics: {
-            total_return: [24.86, 18.45, 15.23, 22.10][index] || 0,
-            sharpe_ratio: [1.84, 1.52, 1.38, 1.67][index] || 0,
-            max_drawdown: [-8.4, -12.3, -9.8, -10.5][index] || 0,
-            profit_factor: [2.34, 1.89, 1.75, 2.12][index] || 0,
-            win_rate: [68.5, 62.3, 59.8, 65.4][index] || 0,
-            total_trades: [1247, 1156, 1089, 1198][index] || 0,
-          },
-          ranks: {
-            total_return: index + 1,
-            sharpe_ratio: index + 1,
-            max_drawdown: index + 1,
-            profit_factor: index + 1,
-            win_rate: index + 1,
-            total_trades: index + 1,
-          },
-          avgRank: index + 1
-        }));
+          metrics,
+          ranks: {}, 
+          avgRank: 0 
+        };
+      });
+
+      // Calculate ranks
+      selectedMetrics.forEach(metric => {
+        const sorted = [...comparisonResults].sort((a, b) => {
+            return b.metrics[metric.id] - a.metrics[metric.id];
+        });
+        
+        sorted.forEach((res, idx) => {
+            res.ranks[metric.id] = idx + 1;
+        });
+      });
+
+      // Calculate avg rank
+      comparisonResults.forEach(res => {
+        const ranks = selectedMetrics.map(m => res.ranks[m.id]);
+        const sum = ranks.reduce((a, b) => a + b, 0);
+        res.avgRank = sum / ranks.length;
+      });
       
-      setResults(mockResults);
-      setBestStrategy(mockResults[0]);
+      // Sort by avg rank
+      comparisonResults.sort((a, b) => a.avgRank - b.avgRank);
+
+      setResults(comparisonResults);
+      setBestStrategy(comparisonResults[0]);
       setIsComparing(false);
-    }, 1500);
+    }, 500);
   };
 
   return (
@@ -121,7 +157,13 @@ export function ComparePage() {
             </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {backtests.map((backtest, index) => (
+              {backtests.length === 0 ? (
+                <div className="text-center py-8 text-[#a1a1aa]">
+                  <p>No backtests found.</p>
+                  <p className="text-sm mt-2">Run a strategy in the Strategy Builder or Optimizer to see it here.</p>
+                </div>
+              ) : (
+                backtests.map((backtest, index) => (
                 <button
                   key={backtest.id}
                   onClick={() => toggleBacktest(backtest.id)}
@@ -150,7 +192,7 @@ export function ComparePage() {
                     </div>
                   </div>
                 </button>
-              ))}
+              )))}
             </div>
           </Card>
 
