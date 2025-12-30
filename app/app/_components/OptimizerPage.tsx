@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sliders, Plus, X, Trophy, Download, TrendingUp, TrendingDown, Activity, Info } from "lucide-react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -36,6 +36,8 @@ interface OptimizerResult {
   sharpeRatio: number;
   maxDrawdown: number;
   profitFactor: number;
+  cagr?: number;
+  finalUsdt?: number;
   rank?: number;
 }
 
@@ -64,27 +66,27 @@ const tradingPairs = [
 
 const strategyParameters: Record<string, { value: string; label: string }[]> = {
   macd: [
-    { value: "fast_period", label: "Fast Period" },
-    { value: "slow_period", label: "Slow Period" },
-    { value: "signal_period", label: "Signal Period" }
+    { value: "ema_s", label: "Fast Period (EMA S)" },
+    { value: "ema_l", label: "Slow Period (EMA L)" },
+    { value: "signal_mw", label: "Signal Period" }
   ],
   rsi: [
-    { value: "period", label: "Period" },
-    { value: "overbought", label: "Overbought Level" },
-    { value: "oversold", label: "Oversold Level" }
+    { value: "periods", label: "Period" },
+    { value: "rsi_upper", label: "Overbought Level" },
+    { value: "rsi_lower", label: "Oversold Level" }
   ],
   bollinger: [
-    { value: "period", label: "Period" },
-    { value: "std_dev", label: "Standard Deviation" }
+    { value: "sma", label: "Period (SMA)" },
+    { value: "dev", label: "Standard Deviation" }
   ],
   sma: [
-    { value: "fast_period", label: "Fast Period" },
-    { value: "slow_period", label: "Slow Period" }
+    { value: "sma_s", label: "Fast Period" },
+    { value: "sma_m", label: "Medium Period" },
+    { value: "sma_l", label: "Slow Period" }
   ],
   stochastic: [
-    { value: "k_period", label: "K Period" },
-    { value: "d_period", label: "D Period" },
-    { value: "slowing", label: "Slowing" }
+    { value: "periods", label: "K Period" },
+    { value: "d_mw", label: "D Period" }
   ]
 };
 
@@ -105,34 +107,74 @@ export function OptimizerPage() {
   const [results, setResults] = useState<OptimizerResult[] | null>(null);
   const [bestResult, setBestResult] = useState<OptimizerResult | null>(null);
   const [optimizationId, setOptimizationId] = useState<string | null>(null);
+  
+  // Refs to track state in event handlers without stale closures
+  const optimizationIdRef = useRef<string | null>(null);
+  const isOptimizingRef = useRef(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Sync refs with state
+  useEffect(() => {
+    optimizationIdRef.current = optimizationId;
+  }, [optimizationId]);
+
+  useEffect(() => {
+    isOptimizingRef.current = isOptimizing;
+  }, [isOptimizing]);
 
   // WebSocket listeners
   useEffect(() => {
     if (!socket) return;
 
     const handleProgress = (data: any) => {
-      if (data.optimizationId === optimizationId) {
+      // Check if this is the optimization we are waiting for
+      // 1. ID matches
+      // 2. OR we are optimizing but don't have an ID yet (race condition)
+      const isMatchingId = optimizationIdRef.current && data.optimizationId === optimizationIdRef.current;
+      const isPendingStart = isOptimizingRef.current && !optimizationIdRef.current;
+
+      if (isMatchingId || isPendingStart) {
+        // If we caught it in the pending state, we can optionally set the ID now, 
+        // but let's just update progress to be safe
+        if (isPendingStart) {
+            console.log("Received progress for pending optimization:", data.optimizationId);
+        }
         setProgress(Math.round(data.progress));
       }
     };
 
     const handleComplete = (data: any) => {
-      if (data.optimizationId === optimizationId) {
+      const isMatchingId = optimizationIdRef.current && data.optimizationId === optimizationIdRef.current;
+      const isPendingStart = isOptimizingRef.current && !optimizationIdRef.current;
+
+      if (isMatchingId || isPendingStart) {
         setIsOptimizing(false);
         setProgress(100);
         
         // Process results
         if (data.topResults && Array.isArray(data.topResults)) {
           const processedResults: OptimizerResult[] = data.topResults.map((item: any, index: number) => {
-            // Extract performance metrics safely
-            const perf = item.result?.performance || {};
+            // Extract performance metrics safely (support both old and new payload structures)
+            const perf = item.performance_metrics || item.result?.performance || {};
+            const params = item.combination || item.config?.combination || {};
             
+            // Calculate total return percentage
+            // New payload uses 'cstrategy' (multiplier), old used 'total_return' (decimal)
+            let totalReturn = 0;
+            if (perf.cstrategy !== undefined) {
+              totalReturn = (perf.cstrategy - 1) * 100;
+            } else if (perf.total_return !== undefined) {
+              totalReturn = perf.total_return * 100;
+            }
+
             return {
-              parameters: item.config?.combination || {},
-              totalReturn: parseFloat((perf.total_return * 100).toFixed(2)) || 0,
-              sharpeRatio: parseFloat(perf.sharpe_ratio?.toFixed(2)) || 0,
-              maxDrawdown: parseFloat((perf.max_drawdown * 100).toFixed(2)) || 0,
-              profitFactor: parseFloat(perf.profit_factor?.toFixed(2)) || 0,
+              parameters: params,
+              totalReturn: parseFloat(totalReturn.toFixed(2)),
+              sharpeRatio: parseFloat((perf.sharpe || perf.sharpe_ratio || 0).toFixed(2)),
+              maxDrawdown: parseFloat((perf.max_drawdown || 0).toFixed(2)), // Not currently in new payload
+              profitFactor: parseFloat((perf.profit_factor || 0).toFixed(2)), // Not currently in new payload
+              cagr: parseFloat((perf.cagr || 0).toFixed(2)),
+              finalUsdt: parseFloat((perf.final_usdt_levered || 0).toFixed(2)),
               rank: index + 1
             };
           });
@@ -140,6 +182,10 @@ export function OptimizerPage() {
           setResults(processedResults);
           if (processedResults.length > 0) {
             setBestResult(processedResults[0]);
+            // Scroll to results
+            setTimeout(() => {
+              resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
           }
           toast.success("Optimization completed successfully!");
         }
@@ -153,7 +199,7 @@ export function OptimizerPage() {
       socket.off('optimization:progress', handleProgress);
       socket.off('optimization:complete', handleComplete);
     };
-  }, [socket, optimizationId]);
+  }, [socket]); // Removed optimizationId dependency to avoid re-subscribing
 
   const addStrategy = () => {
     setStrategiesConfig([
@@ -549,7 +595,7 @@ export function OptimizerPage() {
 
         {/* Results Section */}
         {results && bestResult && (
-          <div className="space-y-6 animate-fadeIn">
+          <div ref={resultsRef} className="space-y-6 animate-fadeIn">
             {/* Best Configuration Card */}
             <Card variant="glass" className="p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#7c3aed]/20 to-[#06b6d4]/20 rounded-full blur-3xl"></div>
@@ -588,18 +634,18 @@ export function OptimizerPage() {
 
                   <div className="glass rounded-lg p-4 hover:bg-[#27272a]/50 transition-colors">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs text-[#a1a1aa]">Max Drawdown</p>
-                      <TrendingDown className="w-4 h-4 text-red-400" />
+                      <p className="text-xs text-[#a1a1aa]">CAGR</p>
+                      <TrendingDown className="w-4 h-4 text-green-400" />
                     </div>
-                    <p className="text-2xl font-bold text-red-400">{bestResult.maxDrawdown}%</p>
+                    <p className="text-2xl font-bold text-green-400">{bestResult.cagr ? bestResult.cagr.toLocaleString() : '0'}%</p>
                   </div>
 
                   <div className="glass rounded-lg p-4 hover:bg-[#27272a]/50 transition-colors">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs text-[#a1a1aa]">Profit Factor</p>
+                      <p className="text-xs text-[#a1a1aa]">Final USDT</p>
                       <Activity className="w-4 h-4 text-[#7c3aed]" />
                     </div>
-                    <p className="text-2xl font-bold text-[#fafafa]">{bestResult.profitFactor}</p>
+                    <p className="text-2xl font-bold text-[#fafafa]">${bestResult.finalUsdt?.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -622,8 +668,8 @@ export function OptimizerPage() {
                       <th className="text-left py-3 px-4 text-xs font-semibold text-[#a1a1aa]">Parameters</th>
                       <th className="text-right py-3 px-4 text-xs font-semibold text-[#a1a1aa]">Total Return</th>
                       <th className="text-right py-3 px-4 text-xs font-semibold text-[#a1a1aa]">Sharpe</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-[#a1a1aa]">Drawdown</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-[#a1a1aa]">Profit Factor</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-[#a1a1aa]">CAGR</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-[#a1a1aa]">Final USDT</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -658,8 +704,8 @@ export function OptimizerPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right text-[#fafafa] font-semibold">{result.sharpeRatio}</td>
-                        <td className="py-3 px-4 text-right text-red-400 font-semibold">{result.maxDrawdown}%</td>
-                        <td className="py-3 px-4 text-right text-[#fafafa] font-semibold">{result.profitFactor}</td>
+                        <td className="py-3 px-4 text-right text-green-400 font-semibold">{result.cagr ? result.cagr.toLocaleString() : '0'}%</td>
+                        <td className="py-3 px-4 text-right text-[#fafafa] font-semibold">${result.finalUsdt?.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
