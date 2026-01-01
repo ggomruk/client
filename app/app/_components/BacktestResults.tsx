@@ -185,9 +185,29 @@ Leverage,${result.leverageApplied}x`;
             )}
 
             {activeTab === 'trades' && (
-              <div className="text-center py-8 text-text-secondary">
-                <p className="text-sm">Trade log visualization coming soon</p>
-                <p className="text-xs mt-2">This will show individual buy/sell transactions</p>
+              <div className="space-y-2">
+                {result.performance?.trades && result.performance.trades.length > 0 ? (
+                  result.performance.trades.map((trade: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
+                      <div className="flex flex-col">
+                        <span className={`text-sm font-semibold ${trade.direction === 'long' ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
+                          {trade.direction.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-text-secondary">{new Date(trade.entry_time).toLocaleString()}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-sm font-semibold ${trade.pnl >= 0 ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
+                          {trade.pnl >= 0 ? '+' : ''}{trade.pnl.toFixed(2)}%
+                        </span>
+                        <span className="text-xs text-text-secondary">Exit: {new Date(trade.exit_time).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-text-secondary">
+                    <p className="text-sm">No trades found</p>
+                  </div>
+                )}
               </div>
             )}
 

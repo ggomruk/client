@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useEffect, useState } from 'react'
 import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp } from "lightweight-charts";
 import { useWebsocket } from '../_provider/binance.websocket';
 import { usePanel } from '../_provider/panel.context';
+import { useBacktest } from '../_provider/backtest.context';
 
 interface IndicatorConfig {
     enabled: boolean;
@@ -21,6 +22,7 @@ interface IndicatorsState {
 const FinancialChart = () => {
     const { klineData, loadMoreData, isLoadingMore, symbol, interval, setInterval } = useWebsocket();
     const { showIndicators, setShowIndicators, isBacktestMode, panelStack, updatePanelStack } = usePanel();
+    const { tradeMarkers } = useBacktest();
 
     const chartContainerRef = useRef<HTMLDivElement|null>(null);
     const chartRef = useRef<IChartApi|null>(null);
@@ -648,6 +650,30 @@ const FinancialChart = () => {
             console.error('Error updating chart:', error);
         }
     }, [klineData, indicators, symbol, interval]);
+
+    // Update trade markers
+    useEffect(() => {
+        if (!candleSeriesRef.current) return;
+        
+        if (isBacktestMode && tradeMarkers.length > 0) {
+            // Sort markers by time
+            const sortedMarkers = [...tradeMarkers].sort((a, b) => a.time - b.time);
+            
+            // Convert to lightweight-charts format
+            const chartMarkers = sortedMarkers.map(m => ({
+                time: m.time as UTCTimestamp,
+                position: m.position,
+                color: m.color,
+                shape: m.shape,
+                text: m.text,
+                size: m.size,
+            }));
+            
+            candleSeriesRef.current.setMarkers(chartMarkers);
+        } else {
+            candleSeriesRef.current.setMarkers([]);
+        }
+    }, [tradeMarkers, isBacktestMode]);
 
     const updateIndicator = (key: keyof IndicatorsState, field: keyof IndicatorConfig, value: any) => {
         setIndicators(prev => ({
