@@ -1,5 +1,6 @@
 import axiosInstance from "../app/_api/axios";
 import { BacktestResult, BacktestParams } from "../app/_types/backtest";
+import { GeneralResponse } from "../app/_types/common";
 
 interface SubmitBacktestResponse {
   ok: number;
@@ -35,24 +36,24 @@ class BacktestService {
    */
   async submitBacktest(params: BacktestParams): Promise<SubmitBacktestResponse> {
     try {
-      const response = await axiosInstance.post('/algo/backtest', params);
+      const response = await axiosInstance.post<GeneralResponse<any>>('/algo/backtest', params);
       
-      if (response.data.ok) {
+      if (response.data.isOk) {
         return {
           ok: 1,
-          data: response.data.data,
+          data: response.data.payload,
         };
       } else {
         return {
           ok: 0,
-          error: response.data.error || 'Failed to submit backtest',
+          error: response.data.message || 'Failed to submit backtest',
         };
       }
     } catch (error: any) {
       console.error('Submit backtest error:', error);
       return {
         ok: 0,
-        error: error.response?.data?.error || error.message || 'Failed to submit backtest',
+        error: error.response?.data?.message || error.message || 'Failed to submit backtest',
       };
     }
   }
@@ -62,24 +63,24 @@ class BacktestService {
    */
   async getBacktestResult(backtestId: string): Promise<GetBacktestResponse> {
     try {
-      const response = await axiosInstance.get(`/algo/backtest/${backtestId}`);
+      const response = await axiosInstance.get<GeneralResponse<BacktestResult>>(`/algo/backtest/${backtestId}`);
       
-      if (response.data.ok) {
+      if (response.data.isOk) {
         return {
           ok: 1,
-          data: response.data.data,
+          data: response.data.payload,
         };
       } else {
         return {
           ok: 0,
-          error: response.data.error || 'Failed to fetch backtest result',
+          error: response.data.message || 'Failed to fetch backtest result',
         };
       }
     } catch (error: any) {
       console.error('Get backtest result error:', error);
       return {
         ok: 0,
-        error: error.response?.data?.error || error.message || 'Failed to fetch backtest result',
+        error: error.response?.data?.message || error.message || 'Failed to fetch backtest result',
       };
     }
   }
@@ -89,24 +90,24 @@ class BacktestService {
    */
   async getUserBacktests(): Promise<GetBacktestsResponse> {
     try {
-      const response = await axiosInstance.get('/algo/backtests');
+      const response = await axiosInstance.get<GeneralResponse<BacktestResult[]>>('/algo/backtests');
       
-      if (response.data.ok) {
+      if (response.data.isOk) {
         return {
           ok: 1,
-          data: response.data.data,
+          data: response.data.payload,
         };
       } else {
         return {
           ok: 0,
-          error: response.data.error || 'Failed to fetch backtests',
+          error: response.data.message || 'Failed to fetch backtests',
         };
       }
     } catch (error: any) {
       console.error('Get user backtests error:', error);
       return {
         ok: 0,
-        error: error.response?.data?.error || error.message || 'Failed to fetch backtests',
+        error: error.response?.data?.message || error.message || 'Failed to fetch backtests',
       };
     }
   }
@@ -116,9 +117,9 @@ class BacktestService {
    */
   async deleteBacktest(backtestId: string): Promise<DeleteBacktestResponse> {
     try {
-      const response = await axiosInstance.delete(`/algo/backtest/${backtestId}`);
+      const response = await axiosInstance.delete<GeneralResponse<any>>(`/algo/backtest/${backtestId}`);
       
-      if (response.data.ok) {
+      if (response.data.isOk) {
         return {
           ok: 1,
           message: 'Backtest deleted successfully',
@@ -126,14 +127,14 @@ class BacktestService {
       } else {
         return {
           ok: 0,
-          error: response.data.error || 'Failed to delete backtest',
+          error: response.data.message || 'Failed to delete backtest',
         };
       }
     } catch (error: any) {
       console.error('Delete backtest error:', error);
       return {
         ok: 0,
-        error: error.response?.data?.error || error.message || 'Failed to delete backtest',
+        error: error.response?.data?.message || error.message || 'Failed to delete backtest',
       };
     }
   }

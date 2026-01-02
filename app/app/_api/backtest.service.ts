@@ -1,4 +1,5 @@
 import axiosInstance from './axios';
+import { GeneralResponse } from '../_types/common';
 
 export interface BacktestHistoryItem {
   id: string;
@@ -23,7 +24,7 @@ export interface BacktestHistoryItem {
 
 export const backtestService = {
   getHistory: async (): Promise<BacktestHistoryItem[]> => {
-    const response = await axiosInstance.get('/algo/backtest/history');
-    return response.data.data;
+    const response = await axiosInstance.get<GeneralResponse<BacktestHistoryItem[]>>('/algo/backtest/history');
+    return response.data.payload || [];
   },
 };
