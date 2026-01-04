@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card } from "./ui/card";
-import { Button } from "./ui/button";
+import { Card } from "../../_components/ui/card";
+import { Button } from "../../_components/ui/button";
 import { Play, CheckCircle, XCircle, Clock, Loader2 } from "lucide-react";
-import axiosInstance from "../_api/axios";
+import axiosInstance from "../../_api/axios";
 import { toast } from "sonner";
 
 interface OptimizationTask {

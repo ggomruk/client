@@ -2,9 +2,9 @@
 
 import React, { useMemo, useRef, useEffect, useState } from 'react'
 import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp } from "lightweight-charts";
-import { useWebsocket } from '../_provider/binance.websocket';
-import { usePanel } from '../_provider/panel.context';
-import { useBacktest } from '../_provider/backtest.context';
+import { useWebsocket } from '../../_provider/binance.websocket';
+import { usePanel } from '../../_provider/panel.context';
+import { useBacktest } from '../../_provider/backtest.context';
 
 interface IndicatorConfig {
     enabled: boolean;

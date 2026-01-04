@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Download } from 'lucide-react';
-import { useBacktest } from '../_provider/backtest.context';
+import { useBacktest } from '../../_provider/backtest.context';
 
 export default function BacktestResults() {
   const { result, isRunning } = useBacktest();

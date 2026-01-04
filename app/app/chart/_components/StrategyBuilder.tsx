@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Play, Loader2, X } from 'lucide-react';
-import { useBacktest } from '../_provider/backtest.context';
-import { useWebsocket } from '../_provider/binance.websocket';
-import { usePanel } from '../_provider/panel.context';
+import { useBacktest } from '../../_provider/backtest.context';
+import { useWebsocket } from '../../_provider/binance.websocket';
+import { usePanel } from '../../_provider/panel.context';
 
 const STRATEGIES = [
   { id: 'SMA', name: 'SMA Crossover', description: 'Simple Moving Average crossover strategy' },

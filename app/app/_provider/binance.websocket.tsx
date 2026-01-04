@@ -80,7 +80,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                 }
             });
 
-            const olderData: IKlineData[] = response.data;
+            const olderData: IKlineData[] = response.data.payload || [];
             
             if (olderData.length > 0) {
                 // Prepend older data to existing data
@@ -116,17 +116,18 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                     params: { symbol }
                 });
                 
-                if (tickerResponse.data) {
+                if (tickerResponse.data && tickerResponse.data.payload) {
+                    const ticker = tickerResponse.data.payload;
                     setSymbolData({
                         eventTime: Date.now(),
-                        symbol: tickerResponse.data.symbol,
-                        priceChange: parseFloat(tickerResponse.data.priceChange),
-                        priceChangePercent: parseFloat(tickerResponse.data.priceChangePercent),
-                        lastPrice: parseFloat(tickerResponse.data.lastPrice),
-                        openPrice: parseFloat(tickerResponse.data.openPrice),
-                        highPrice: parseFloat(tickerResponse.data.highPrice),
-                        lowPrice: parseFloat(tickerResponse.data.lowPrice),
-                        quantity: parseFloat(tickerResponse.data.volume),
+                        symbol: ticker.symbol,
+                        priceChange: parseFloat(ticker.priceChange),
+                        priceChangePercent: parseFloat(ticker.priceChangePercent),
+                        lastPrice: parseFloat(ticker.lastPrice),
+                        openPrice: parseFloat(ticker.openPrice),
+                        highPrice: parseFloat(ticker.highPrice),
+                        lowPrice: parseFloat(ticker.lowPrice),
+                        quantity: parseFloat(ticker.volume),
                     });
                 }
                 
@@ -139,7 +140,7 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
                     }
                 });
                 
-                const data: IKlineData[] = response.data;
+                const data: IKlineData[] = response.data.payload || [];
                 // REST data should already have proper open times from the backend.
                 // Just sort and store as-is; Chart.tsx will handle normalization if needed.
                 const sorted = data.sort((a: any, b: any) => Number(a.time) - Number(b.time));
