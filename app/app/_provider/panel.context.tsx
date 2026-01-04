@@ -5,16 +5,14 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 interface PanelContextType {
   showIndicators: boolean;
   setShowIndicators: (show: boolean) => void;
-  isBacktestMode: boolean;
   panelStack: ('indicators' | 'backtest')[];
   updatePanelStack: (panel: 'indicators' | 'backtest', show: boolean) => void;
 }
 
 const PanelContext = createContext<PanelContextType | undefined>(undefined);
 
-export const PanelProvider: React.FC<{ children: ReactNode; isBacktestMode: boolean }> = ({ 
-  children, 
-  isBacktestMode 
+export const PanelProvider: React.FC<{ children: ReactNode }> = ({ 
+  children 
 }) => {
   const [showIndicators, setShowIndicators] = useState(false);
   const [panelStack, setPanelStack] = useState<('indicators' | 'backtest')[]>([]);
@@ -37,7 +35,6 @@ export const PanelProvider: React.FC<{ children: ReactNode; isBacktestMode: bool
     <PanelContext.Provider value={{
       showIndicators,
       setShowIndicators,
-      isBacktestMode,
       panelStack,
       updatePanelStack,
     }}>

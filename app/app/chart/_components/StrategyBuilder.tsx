@@ -5,6 +5,7 @@ import { Play, Loader2, X } from 'lucide-react';
 import { useBacktest } from '../../_provider/backtest.context';
 import { useWebsocket } from '../../_provider/binance.websocket';
 import { usePanel } from '../../_provider/panel.context';
+import BacktestResults from './BacktestResults';
 
 const STRATEGIES = [
   { id: 'SMA', name: 'SMA Crossover', description: 'Simple Moving Average crossover strategy' },
@@ -36,7 +37,7 @@ const STRATEGY_PARAMS_CONFIG: Record<string, Array<{ name: string; label: string
 
 export default function StrategyBuilder() {
   const { symbol, interval } = useWebsocket();
-  const { showIndicators, panelStack, updatePanelStack, isBacktestMode } = usePanel();
+  const { showIndicators, panelStack, updatePanelStack } = usePanel();
   const {
     selectedStrategy,
     setSelectedStrategy,
@@ -48,27 +49,6 @@ export default function StrategyBuilder() {
     isRunning,
     error,
   } = useBacktest();
-
-  // Update panel stack when backtest mode changes
-  useEffect(() => {
-    updatePanelStack('backtest', isBacktestMode);
-  }, [isBacktestMode, updatePanelStack]);
-
-  // Calculate vertical offset based on panel stack
-  const getTopOffset = () => {
-    const indicatorsIndex = panelStack.indexOf('indicators');
-    const backtestIndex = panelStack.indexOf('backtest');
-    
-    // If indicators are visible and should be above backtest
-    if (showIndicators && indicatorsIndex < backtestIndex) {
-      return 'top-[300px]'; // Below indicators panel (240px height + 24px gap + 24px chart header)
-    }
-    return 'top-14'; // 24px from chart top
-  };
-
-  const getZIndex = () => {
-    return panelStack.indexOf('backtest') === panelStack.length - 1 ? 11 : 10;
-  };
 
   // Initialize strategy params when strategy changes
   useEffect(() => {
@@ -108,12 +88,9 @@ export default function StrategyBuilder() {
   const currentConfig = STRATEGY_PARAMS_CONFIG[selectedStrategy] || [];
 
   return (
-    <div 
-      className={`absolute ${getTopOffset()} left-6 w-[512px] bg-[#18181b] border border-[#3f3f46] rounded-xl shadow-2xl max-h-[340px] overflow-hidden flex flex-col`}
-      style={{ pointerEvents: 'auto', zIndex: getZIndex() }}
-    >
+    <div className="flex flex-col h-full bg-[#18181b] border-l border-[#3f3f46]">
       {/* Header */}
-      <div className="px-6 py-3 border-b border-[#3f3f46] flex-shrink-0">
+      <div className="px-4 py-3 border-b border-[#3f3f46] flex-shrink-0">
         <h3 className="text-base font-semibold text-text-primary flex items-center gap-2">
           🧪 Strategy Builder
         </h3>
@@ -121,7 +98,7 @@ export default function StrategyBuilder() {
       </div>
 
       {/* Content - Scrollable */}
-      <div className="px-6 py-4 space-y-3 overflow-y-auto flex-1">
+      <div className="px-4 py-4 space-y-4 overflow-y-auto flex-1">
         {/* Strategy Selection */}
         <div>
           <label className="block text-xs font-medium text-text-primary mb-2">
@@ -269,6 +246,9 @@ export default function StrategyBuilder() {
           )}
         </button>
       </div>
+
+      {/* Backtest Results Summary - Separate Section */}
+      <BacktestResults />
     </div>
   );
 }

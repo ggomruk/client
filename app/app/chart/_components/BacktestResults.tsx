@@ -1,21 +1,45 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Download } from 'lucide-react';
+import { TrendingUp, TrendingDown, Download, Activity, BarChart2, Percent, DollarSign, X } from 'lucide-react';
 import { useBacktest } from '../../_provider/backtest.context';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../_components/ui/dialog";
+import { Button } from "../../_components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../_components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../_components/ui/tabs";
+import { ScrollArea } from "../../_components/ui/scroll-area";
 
 export default function BacktestResults() {
-  const { result, isRunning } = useBacktest();
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'trades' | 'stats'>('overview');
+  const { result, isRunning, clearResults } = useBacktest();
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   if (!result && !isRunning) {
     return null;
   }
 
-  const exportToCSV = () => {
-    if (!result) return;
+  if (isRunning) {
+    return (
+      <div className="w-full bg-[#18181b] border border-[#3f3f46] rounded-lg text-[#fafafa] mt-4 p-4">
+        <div className="flex items-center justify-center gap-2">
+          <Activity className="w-4 h-4 animate-spin text-[#7c3aed]" />
+          <span className="text-sm">Running backtest...</span>
+        </div>
+      </div>
+    );
+  }
 
+  if (!result) return null;
+
+  const profitLoss = result.finalBalance - result.initialBalance;
+
+  const exportToCSV = () => {
     const csv = `Metric,Value
 Strategy,${result.strategyName}
 Total Return,${result.totalReturn.toFixed(2)}%
@@ -36,218 +60,207 @@ Leverage,${result.leverageApplied}x`;
   };
 
   return (
-    <div className="border-t border-[#3f3f46] bg-[#18181b]">
-      {/* Header - Always Visible */}
-      <div 
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-[#27272a]/50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center gap-3">
+    <>
+      {/* Summary Card */}
+      <div className="w-full bg-[#18181b] border-t border-[#3f3f46] text-[#fafafa]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#3f3f46]">
           <div className="flex items-center gap-2">
-            {isExpanded ? (
-              <ChevronDown className="w-5 h-5 text-text-secondary" />
-            ) : (
-              <ChevronUp className="w-5 h-5 text-text-secondary" />
-            )}
-            <h3 className="text-lg font-semibold text-text-primary">Backtest Results</h3>
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <h3 className="text-sm font-medium">Backtest Results</h3>
           </div>
-          
-          {result && !isExpanded && (
-            <div className="flex items-center gap-4 text-sm">
-              <div className={`flex items-center gap-1 ${result.totalReturn >= 0 ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
-                {result.totalReturn >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                <span className="font-semibold">{result.totalReturn.toFixed(2)}%</span>
-              </div>
-              <div className="text-text-secondary">
-                Win Rate: <span className="text-text-primary font-medium">{result.winRate.toFixed(1)}%</span>
-              </div>
-              <div className="text-text-secondary">
-                Trades: <span className="text-text-primary font-medium">{result.totalTrades}</span>
-              </div>
-            </div>
-          )}
+          <button 
+            onClick={clearResults}
+            className="text-[#a1a1aa] hover:text-[#fafafa] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {result && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              exportToCSV();
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] rounded-lg text-sm text-text-primary transition-colors"
+        {/* Metrics */}
+        <div className="px-4 py-3 space-y-3">
+          {/* Total Return */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#a1a1aa]">Total Return</span>
+            <span className={`text-sm font-semibold ${result.totalReturn >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {result.totalReturn >= 0 ? '+' : ''}{result.totalReturn.toFixed(2)}%
+            </span>
+          </div>
+
+          {/* Win Rate */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#a1a1aa]">Win Rate</span>
+            <span className="text-sm font-semibold">{result.winRate.toFixed(2)}%</span>
+          </div>
+
+          {/* Total Trades */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#a1a1aa]">Total Trades</span>
+            <span className="text-sm font-semibold">{result.totalTrades}</span>
+          </div>
+
+          {/* Profit/Loss */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#a1a1aa]">Profit/Loss</span>
+            <span className={`text-sm font-semibold ${profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              ${profitLoss.toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        {/* View Detailed Report Button */}
+        <div className="px-4 pb-4">
+          <button 
+            onClick={() => setIsDetailsOpen(true)}
+            className="w-full bg-[#27272a] hover:bg-[#3f3f46] text-[#fafafa] text-sm font-medium py-2 px-4 rounded-lg transition-colors"
           >
-            <Download className="w-4 h-4" />
-            Export
+            View Detailed Report
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Expanded Content */}
-      {isExpanded && result && (
-        <div className="border-t border-[#3f3f46]">
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 p-4 bg-[#09090b]">
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Strategy</span>
-              <span className="text-sm font-semibold text-text-primary mt-1">{result.strategyName}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Total Return</span>
-              <span className={`text-sm font-semibold mt-1 ${result.totalReturn >= 0 ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
-                {result.totalReturn >= 0 ? '+' : ''}{result.totalReturn.toFixed(2)}%
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Sharpe Ratio</span>
-              <span className="text-sm font-semibold text-text-primary mt-1">{result.sharpeRatio.toFixed(2)}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Max Drawdown</span>
-              <span className="text-sm font-semibold text-[#ff6467] mt-1">{result.maxDrawdown.toFixed(2)}%</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Total Trades</span>
-              <span className="text-sm font-semibold text-text-primary mt-1">{result.totalTrades}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Win Rate</span>
-              <span className="text-sm font-semibold text-text-primary mt-1">{result.winRate.toFixed(2)}%</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Final Balance</span>
-              <span className="text-sm font-semibold text-text-primary mt-1">${result.finalBalance.toFixed(2)}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Leverage</span>
-              <span className="text-sm font-semibold text-text-primary mt-1">{result.leverageApplied}x</span>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-1 px-4 border-t border-[#3f3f46] bg-[#18181b]">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'overview'
-                  ? 'text-[#7c3aed] border-[#7c3aed]'
-                  : 'text-text-secondary border-transparent hover:text-text-primary'
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('trades')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'trades'
-                  ? 'text-[#7c3aed] border-[#7c3aed]'
-                  : 'text-text-secondary border-transparent hover:text-text-primary'
-              }`}
-            >
-              Trade Log
-            </button>
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === 'stats'
-                  ? 'text-[#7c3aed] border-[#7c3aed]'
-                  : 'text-text-secondary border-transparent hover:text-text-primary'
-              }`}
-            >
-              Statistics
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-4 bg-[#09090b] max-h-64 overflow-y-auto">
-            {activeTab === 'overview' && (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-sm text-text-secondary">Profit/Loss</span>
-                  <span className={`text-sm font-semibold ${result.totalReturn >= 0 ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
-                    ${(result.finalBalance - (result.leveredPerformance?.initial_balance || 10000)).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-sm text-text-secondary">Return on Investment</span>
-                  <span className={`text-sm font-semibold ${result.totalReturn >= 0 ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
-                    {result.totalReturn.toFixed(2)}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-sm text-text-secondary">Risk-Adjusted Return (Sharpe)</span>
-                  <span className="text-sm font-semibold text-text-primary">{result.sharpeRatio.toFixed(3)}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-sm text-text-secondary">Maximum Drawdown</span>
-                  <span className="text-sm font-semibold text-[#ff6467]">{result.maxDrawdown.toFixed(2)}%</span>
-                </div>
+      {/* Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-4xl bg-[#18181b] border-[#3f3f46] text-[#fafafa] h-[80vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="p-6 border-b border-[#3f3f46]">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-xl font-bold">Backtest Analysis</DialogTitle>
+                <DialogDescription className="text-[#a1a1aa]">
+                  {result.strategyName} • {new Date(result.startTime).toLocaleDateString()} - {new Date(result.endTime).toLocaleDateString()}
+                </DialogDescription>
               </div>
-            )}
+              <Button variant="outline" size="sm" onClick={exportToCSV} className="gap-2 border-[#3f3f46] hover:bg-[#27272a]">
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+             <Tabs defaultValue="overview" className="h-full flex flex-col">
+              <div className="px-6 pt-4">
+                <TabsList className="bg-[#27272a] text-[#a1a1aa]">
+                  <TabsTrigger value="overview" className="data-[state=active]:bg-[#3f3f46] data-[state=active]:text-[#fafafa]">Overview</TabsTrigger>
+                  <TabsTrigger value="trades" className="data-[state=active]:bg-[#3f3f46] data-[state=active]:text-[#fafafa]">Trades</TabsTrigger>
+                  <TabsTrigger value="metrics" className="data-[state=active]:bg-[#3f3f46] data-[state=active]:text-[#fafafa]">Metrics</TabsTrigger>
+                </TabsList>
+              </div>
 
-            {activeTab === 'trades' && (
-              <div className="space-y-2">
-                {result.performance?.trades && result.performance.trades.length > 0 ? (
-                  result.performance.trades.map((trade: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                      <div className="flex flex-col">
-                        <span className={`text-sm font-semibold ${trade.direction === 'long' ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
-                          {trade.direction.toUpperCase()}
-                        </span>
-                        <span className="text-xs text-text-secondary">{new Date(trade.entry_time).toLocaleString()}</span>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className={`text-sm font-semibold ${trade.pnl >= 0 ? 'text-[#05df72]' : 'text-[#ff6467]'}`}>
-                          {trade.pnl >= 0 ? '+' : ''}{trade.pnl.toFixed(2)}%
-                        </span>
-                        <span className="text-xs text-text-secondary">Exit: {new Date(trade.exit_time).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-text-secondary">
-                    <p className="text-sm">No trades found</p>
+              <ScrollArea className="flex-1 p-6">
+                <TabsContent value="overview" className="mt-0 space-y-6">
+                  {/* Key Metrics Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <MetricCard 
+                      label="Total Return" 
+                      value={`${result.totalReturn.toFixed(2)}%`} 
+                      icon={<Percent className="w-4 h-4" />}
+                      trend={result.totalReturn >= 0 ? 'up' : 'down'}
+                    />
+                    <MetricCard 
+                      label="Net Profit" 
+                      value={`${(result.finalBalance - result.initialBalance).toFixed(2)} USDT`} 
+                      icon={<DollarSign className="w-4 h-4" />}
+                      trend={result.finalBalance >= result.initialBalance ? 'up' : 'down'}
+                    />
+                    <MetricCard 
+                      label="Win Rate" 
+                      value={`${result.winRate.toFixed(2)}%`} 
+                      icon={<Activity className="w-4 h-4" />}
+                    />
+                    <MetricCard 
+                      label="Profit Factor" 
+                      value={result.profitFactor.toFixed(2)} 
+                      icon={<BarChart2 className="w-4 h-4" />}
+                    />
                   </div>
-                )}
-              </div>
-            )}
 
-            {activeTab === 'stats' && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-xs text-text-secondary block">Winning Trades</span>
-                  <span className="text-sm font-semibold text-[#05df72] block mt-1">
-                    {Math.round(result.totalTrades * (result.winRate / 100))}
-                  </span>
-                </div>
-                <div className="p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-xs text-text-secondary block">Losing Trades</span>
-                  <span className="text-sm font-semibold text-[#ff6467] block mt-1">
-                    {result.totalTrades - Math.round(result.totalTrades * (result.winRate / 100))}
-                  </span>
-                </div>
-                <div className="p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-xs text-text-secondary block">Win Rate</span>
-                  <span className="text-sm font-semibold text-text-primary block mt-1">{result.winRate.toFixed(1)}%</span>
-                </div>
-                <div className="p-3 bg-[#18181b] rounded-lg border border-[#3f3f46]">
-                  <span className="text-xs text-text-secondary block">Leverage Used</span>
-                  <span className="text-sm font-semibold text-text-primary block mt-1">{result.leverageApplied}x</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                  {/* Equity Curve Placeholder - In a real app, use a chart library here */}
+                  <Card className="bg-[#27272a]/50 border-[#3f3f46]">
+                    <CardHeader>
+                      <CardTitle className="text-sm font-medium">Equity Curve</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-64 flex items-center justify-center text-[#a1a1aa]">
+                      Equity Chart Visualization
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-      {/* Loading State */}
-      {isRunning && (
-        <div className="p-8 text-center">
-          <div className="inline-flex items-center gap-3 text-text-secondary">
-            <div className="w-5 h-5 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-sm">Running backtest...</span>
+                <TabsContent value="trades" className="mt-0">
+                  <div className="space-y-2">
+                    {result.trades.map((trade, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-[#27272a]/50 border border-[#3f3f46]">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${trade.type === 'buy' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {trade.type === 'buy' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm">{trade.symbol}</div>
+                            <div className="text-xs text-[#a1a1aa]">{new Date(trade.entryTime).toLocaleString()}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`font-medium text-sm ${trade.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {trade.pnl >= 0 ? '+' : ''}{trade.pnl.toFixed(2)} USDT
+                          </div>
+                          <div className="text-xs text-[#a1a1aa]">{trade.pnlPercent.toFixed(2)}%</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="metrics" className="mt-0">
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-[#a1a1aa]">Risk Metrics</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm p-2 bg-[#27272a]/30 rounded">
+                            <span>Max Drawdown</span>
+                            <span className="font-mono">{result.maxDrawdown.toFixed(2)}%</span>
+                          </div>
+                          <div className="flex justify-between text-sm p-2 bg-[#27272a]/30 rounded">
+                            <span>Sharpe Ratio</span>
+                            <span className="font-mono">{result.sharpeRatio.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-[#a1a1aa]">Trade Stats</h3>
+                         <div className="space-y-2">
+                          <div className="flex justify-between text-sm p-2 bg-[#27272a]/30 rounded">
+                            <span>Total Trades</span>
+                            <span className="font-mono">{result.totalTrades}</span>
+                          </div>
+                          <div className="flex justify-between text-sm p-2 bg-[#27272a]/30 rounded">
+                            <span>Avg Trade</span>
+                            <span className="font-mono">{result.averageTrade.toFixed(2)} USDT</span>
+                          </div>
+                        </div>
+                      </div>
+                   </div>
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
           </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function MetricCard({ label, value, icon, trend }: { label: string, value: string, icon: React.ReactNode, trend?: 'up' | 'down' }) {
+  return (
+    <Card className="bg-[#27272a]/50 border-[#3f3f46]">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-[#a1a1aa]">{label}</span>
+          <div className="text-[#a1a1aa]">{icon}</div>
         </div>
-      )}
-    </div>
+        <div className={`text-xl font-bold ${trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-[#fafafa]'}`}>
+          {value}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

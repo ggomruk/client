@@ -1,4 +1,4 @@
-import { ReactNode, CSSProperties, MouseEvent } from "react";
+import { ReactNode, CSSProperties, MouseEvent, HTMLAttributes } from "react";
 
 interface CardProps {
   variant?: "default" | "glass" | "gradient" | "bordered";
@@ -31,4 +31,16 @@ export function Card({ variant = "default", className = "", children, glow = fal
       {children}
     </div>
   );
+}
+
+export function CardHeader({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={`flex flex-col space-y-1.5 p-6 ${className}`} {...props}>{children}</div>
+}
+
+export function CardTitle({ className = "", children, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+  return <h3 className={`font-semibold leading-none tracking-tight ${className}`} {...props}>{children}</h3>
+}
+
+export function CardContent({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={`p-6 pt-0 ${className}`} {...props}>{children}</div>
 }

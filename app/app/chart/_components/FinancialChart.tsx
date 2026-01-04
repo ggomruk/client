@@ -21,7 +21,7 @@ interface IndicatorsState {
 
 const FinancialChart = () => {
     const { klineData, loadMoreData, isLoadingMore, symbol, interval, setInterval } = useWebsocket();
-    const { showIndicators, setShowIndicators, isBacktestMode, panelStack, updatePanelStack } = usePanel();
+    const { showIndicators, setShowIndicators, panelStack, updatePanelStack } = usePanel();
     const { tradeMarkers } = useBacktest();
 
     const chartContainerRef = useRef<HTMLDivElement|null>(null);
@@ -36,6 +36,15 @@ const FinancialChart = () => {
 
     // Track interval changes so we can hard-reset chart state when switching timeframes.
     const previousIntervalRef = useRef<string>(interval);
+    
+    const [indicators, setIndicators] = useState<IndicatorsState>({
+        ema1: { enabled: true, period: 12, color: '#F59E0B' },
+        ema2: { enabled: true, period: 26, color: '#8B5CF6' },
+        sma1: { enabled: false, period: 50, color: '#10B981' },
+        sma2: { enabled: false, period: 200, color: '#EF4444' },
+    });
+
+    const previousIndicatorsRef = useRef<IndicatorsState>(indicators);
 
     const getIntervalSeconds = (tf: string): number => {
         const unit = tf.slice(-1);
@@ -153,25 +162,11 @@ const FinancialChart = () => {
     // Cursor position for tooltip
     const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
     
-    const [indicators, setIndicators] = useState<IndicatorsState>({
-        ema1: { enabled: true, period: 12, color: '#F59E0B' },
-        ema2: { enabled: true, period: 26, color: '#8B5CF6' },
-        sma1: { enabled: false, period: 50, color: '#10B981' },
-        sma2: { enabled: false, period: 200, color: '#EF4444' },
-    });
-
     // volumeByTimeRef is maintained by normalizeCandles() so it always matches the candle timeline.
 
     // Calculate vertical offset based on panel stack for Indicators
     const getIndicatorsTopOffset = () => {
-        const indicatorsIndex = panelStack.indexOf('indicators');
-        const backtestIndex = panelStack.indexOf('backtest');
-        
-        // If backtest is visible and should be above indicators
-        if (isBacktestMode && backtestIndex < indicatorsIndex) {
-            return 'top-[365px]';
-        }
-        return 'top-4'; // 64px from chart top (same as backtest solo position)
+        return 'top-4'; // 64px from chart top
     };
 
     const getIndicatorsZIndex = () => {
@@ -510,6 +505,8 @@ const FinancialChart = () => {
             const dataLengthChanged = currentDataLength !== previousDataLengthRef.current;
             const isHistoricalDataLoad = dataLengthChanged && currentDataLength > previousDataLengthRef.current + 1;
             const isNewCandle = lastCandleTime !== lastUpdateTimeRef.current;
+            const indicatorsChanged = previousIndicatorsRef.current !== indicators;
+            previousIndicatorsRef.current = indicators;
             
             // Format + normalize all data (time in seconds, sorted)
             const formattedData = normalizeCandles(klineData);
@@ -613,7 +610,7 @@ const FinancialChart = () => {
                         
                         if (data.length > 0) {
                             // Use same logic as candles: setData for full updates, update for incremental
-                            if (isInitialLoad || symbolChanged || intervalChanged || isHistoricalDataLoad) {
+                            if (isInitialLoad || symbolChanged || intervalChanged || isHistoricalDataLoad || indicatorsChanged) {
                                 // Data is already normalized from formattedData, just need to dedupe by time
                                 const byTime = new Map<number, LineData>();
                                 for (const p of data) {
@@ -655,7 +652,7 @@ const FinancialChart = () => {
     useEffect(() => {
         if (!candleSeriesRef.current) return;
         
-        if (isBacktestMode && tradeMarkers.length > 0) {
+        if (tradeMarkers.length > 0) {
             // Sort markers by time
             const sortedMarkers = [...tradeMarkers].sort((a, b) => a.time - b.time);
             
@@ -673,7 +670,7 @@ const FinancialChart = () => {
         } else {
             candleSeriesRef.current.setMarkers([]);
         }
-    }, [tradeMarkers, isBacktestMode]);
+    }, [tradeMarkers]);
 
     const updateIndicator = (key: keyof IndicatorsState, field: keyof IndicatorConfig, value: any) => {
         setIndicators(prev => ({

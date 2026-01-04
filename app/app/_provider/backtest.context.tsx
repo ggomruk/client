@@ -33,6 +33,12 @@ export interface BacktestResult {
   totalTrades: number;
   winRate: number;
   finalBalance: number;
+  initialBalance: number;
+  startTime: string;
+  endTime: string;
+  profitFactor: number;
+  averageTrade: number;
+  trades: any[];
   performance: any;
   leveredPerformance: any;
 }
@@ -47,9 +53,6 @@ export interface TradeMarker {
 }
 
 interface BacktestContextType {
-  isBacktestMode: boolean;
-  setIsBacktestMode: (value: boolean) => void;
-  
   selectedStrategy: string;
   setSelectedStrategy: (strategy: string) => void;
   
@@ -73,7 +76,6 @@ interface BacktestContextType {
 const BacktestContext = createContext<BacktestContextType | undefined>(undefined);
 
 export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isBacktestMode, setIsBacktestMode] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState('SMA');
   const [strategyParams, setStrategyParams] = useState<StrategyParams>({
     sma_s: 50,
@@ -111,16 +113,6 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     return fullResult.performance.trades.map((trade: any) => {
       const isBuy = trade.side === 'buy'; // Assuming 'side' exists in trade object
-      // If trade object structure is different, adjust accordingly.
-      // Usually trades have entry_time, exit_time, entry_price, exit_price, etc.
-      // Or maybe it's a list of orders.
-      
-      // Let's assume trades list contains executed trades with entry and exit
-      // We might want to mark both entry and exit
-      
-      // For now, let's try to map based on common trade structure
-      // If structure is unknown, we might need to inspect the Python code more closely.
-      // Python engine.py: self.trades.append({...})
       
       return {
         time: new Date(trade.entry_time).getTime() / 1000,
@@ -147,31 +139,57 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         // Fetch full result
         const response = await axiosInstance.get(`/backtest/${data.backtestId}`);
-        const fullResult = response.data;
+        const responseData = response.data;
         
+        if (!responseData.isOk || !responseData.payload) {
+            console.error("Invalid backtest result format", responseData);
+            return;
+        }
+
+        // Check if payload has result property (from getBacktestResult returning full doc)
+        // OR if payload IS the result (from getBacktestResult returning just result)
+        let fullResult = responseData.payload.result || responseData.payload;
+        
+        // If fullResult is still missing or empty, log error
+        if (!fullResult || Object.keys(fullResult).length === 0) {
+             console.error("Backtest result is empty", responseData);
+             return;
+        }
+
+        // Handle case where result is nested in 'result' property of the payload (if payload is the document)
+        if (fullResult.result) {
+            fullResult = fullResult.result;
+        }
+        
+        const params = responseData.payload.params || {};
+
         // Transform result to match BacktestResult interface
         const transformedResult: BacktestResult = {
             backtestId: data.backtestId,
-            strategyName: fullResult.strategy_name,
-            leverageApplied: fullResult.leverage_applied,
-            totalReturn: fullResult.levered_performance.total_return_pct,
-            sharpeRatio: fullResult.performance.sharpe_ratio,
-            maxDrawdown: fullResult.performance.max_drawdown,
-            totalTrades: fullResult.performance.total_trades,
-            winRate: fullResult.performance.win_rate,
-            finalBalance: fullResult.levered_performance.final_balance,
-            performance: fullResult.performance,
-            leveredPerformance: fullResult.levered_performance
+            strategyName: fullResult.strategy_name || 'Unknown',
+            leverageApplied: fullResult.leverage_applied || 1,
+            totalReturn: fullResult.levered_performance?.total_return_pct || 0,
+            sharpeRatio: fullResult.performance?.sharpe_ratio || 0,
+            maxDrawdown: fullResult.performance?.max_drawdown || 0,
+            totalTrades: typeof fullResult.performance?.trades === 'number' ? fullResult.performance.trades : (fullResult.performance?.trades?.length || 0),
+            winRate: fullResult.performance?.win_rate || 0,
+            finalBalance: fullResult.levered_performance?.final_balance || 0,
+            initialBalance: fullResult.performance?.initial_usdt || params.usdt || 0,
+            startTime: params.startDate || new Date().toISOString(),
+            endTime: params.endDate || new Date().toISOString(),
+            profitFactor: fullResult.performance?.profit_factor || 0,
+            averageTrade: fullResult.performance?.avg_trade || 0,
+            trades: Array.isArray(fullResult.performance?.trades) ? fullResult.performance.trades : [],
+            performance: fullResult.performance || {},
+            leveredPerformance: fullResult.levered_performance || {}
         };
 
         setResult(transformedResult);
         
         // Generate trade markers
-        // We need to check the structure of trades in fullResult.performance
-        // Assuming fullResult.performance.trades is an array of trades
-        if (fullResult.performance.trades) {
+        if (transformedResult.trades.length > 0) {
             const markers: TradeMarker[] = [];
-            fullResult.performance.trades.forEach((trade: any) => {
+            transformedResult.trades.forEach((trade: any) => {
                 // Entry marker
                 markers.push({
                     time: new Date(trade.entry_time).getTime() / 1000,
@@ -254,8 +272,6 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const value: BacktestContextType = {
-    isBacktestMode,
-    setIsBacktestMode,
     selectedStrategy,
     setSelectedStrategy,
     strategyParams,
