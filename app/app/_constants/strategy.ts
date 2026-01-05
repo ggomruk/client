@@ -1,10 +1,202 @@
-import { Strategy } from "../_types/startegy.js";
+import { Strategy } from "../_types/startegy";
 
-export const strategyList : Strategy[] = [
-    { name: 'Moving Average Convergence Divergence', symbol: 'MACD', params: ['ema_s', 'ema_l', 'signal_mw'] },
-    { name: 'Bollinger Band', symbol: 'BB', params: ['sma', 'dev'] },
-    { name: 'Simple Moving Average', symbol: 'SMA', params: ['sma_s', 'sma_m', 'sma_l'] },
-    { name: 'Relative Strength Index', symbol: 'RSI', params: ['periods', 'rsi_upper', 'rsi_lower'] },
-    { name: 'RV', symbol: 'RV', params: ['volume_thresh_low', 'volume_thresh_high', 'return_thresh_low', 'return_thresh_high'] },
-    { name: 'SO', symbol: 'SO', params: ['periods', 'd_mw'] },
+export const strategyList: Strategy[] = [
+    {
+        name: 'SMA Crossover',
+        symbol: 'SMA',
+        description: 'Simple Moving Average crossover strategy',
+        signal: 'Buy when the sma_s crosses above the sma_l SMA; sell when it crosses below.',
+        requirements: 'sma_s must be less than sma_l.',
+        params: [
+            { 
+                name: 'sma_s', 
+                label: 'Short Period SMA', 
+                type: 'number', 
+                min: 5, 
+                max: 50, 
+                default: 50, 
+                step: 1,
+            },
+            { 
+                name: 'sma_l', 
+                label: 'Long Period SMA', 
+                type: 'number', 
+                min: 20, 
+                max: 250, 
+                default: 200, 
+                step: 1,
+            },
+        ]
+    },
+    {
+        name: 'RSI',
+        symbol: 'RSI',
+        description: 'Relative Strength Index strategy',
+        signal: 'Buy when RSI crosses above oversold level; sell when it crosses below overbought level.',
+        requirements: 'oversold must be less than overbought.',
+        params: [
+            { 
+                name: 'rsi_period', 
+                label: 'RSI Period', 
+                type: 'number', 
+                min: 2, 
+                max: 30, 
+                default: 14, 
+                step: 1,
+            },
+            { 
+                name: 'oversold', 
+                label: 'Oversold', 
+                type: 'number', 
+                min: 10, 
+                max: 30, 
+                default: 30, 
+                step: 1,
+            },
+            { 
+                name: 'overbought', 
+                label: 'Overbought', 
+                type: 'number', 
+                min: 70, 
+                max: 90, 
+                default: 70, 
+                step: 1,
+            },
+        ]
+    },
+    {
+        name: 'Moving Average Convergence Divergence',
+        symbol: 'MACD',
+        description: 'Moving Average Convergence Divergence',
+        signal: 'Buy when MACD line crosses above Signal line; sell when it crosses below.',
+        requirements: 'fast must be less than slow.',
+        params: [
+            { 
+                name: 'fast', 
+                label: 'Fast Period', 
+                type: 'number', 
+                min: 3, 
+                max: 20, 
+                default: 12, 
+                step: 1,
+            },
+            { 
+                name: 'slow', 
+                label: 'Slow Period', 
+                type: 'number', 
+                min: 20, 
+                max: 50, 
+                default: 26, 
+                step: 1,
+            },
+            { 
+                name: 'signal', 
+                label: 'Signal Period', 
+                type: 'number', 
+                min: 3, 
+                max: 15, 
+                default: 9, 
+                step: 1,
+            },
+        ]
+    },
+    {
+        name: 'Bollinger Bands',
+        symbol: 'Bollinger',
+        description: 'Bollinger Bands breakout strategy',
+        signal: 'Buy when price crosses above upper band; sell when it crosses below lower band.',
+        requirements: 'Price typically stays within bands 90–95% of the time.',
+        params: [
+            { 
+                name: 'period', 
+                label: 'Period', 
+                type: 'number', 
+                min: 10, 
+                max: 50, 
+                default: 20, 
+                step: 1,
+            },
+            { 
+                name: 'std', 
+                label: 'Std Dev', 
+                type: 'number', 
+                min: 1.5, 
+                max: 3.0, 
+                default: 2, 
+                step: 0.1,
+            },
+        ]
+    },
+    {
+        name: 'Return Volume',
+        symbol: 'RV',
+        description: 'Return Volume strategy',
+        signal: 'Buy when volume and return exceed respective thresholds; sell when they fall below.',
+        requirements: 'A value of 1.0 means current volume equals the average; >2.0 is considered a high-volume spike.',
+        params: [
+            { 
+                name: 'volume_thresh_low', 
+                label: 'Volume Thresh Low', 
+                type: 'number', 
+                min: -3, 
+                max: 0, 
+                default: -0.5, 
+                step: 0.1,
+            },
+            { 
+                name: 'volume_thresh_high', 
+                label: 'Volume Thresh High', 
+                type: 'number', 
+                min: 0, 
+                max: 3, 
+                default: 0.5, 
+                step: 0.1,
+            },
+            { 
+                name: 'return_thresh_low', 
+                label: 'Return Thresh Low', 
+                type: 'number', 
+                min: -0.1, 
+                max: 0, 
+                default: -0.01, 
+                step: 0.001,
+            },
+            { 
+                name: 'return_thresh_high', 
+                label: 'Return Thresh High', 
+                type: 'number', 
+                min: 0, 
+                max: 0.1, 
+                default: 0.01, 
+                step: 0.001,
+            },
+        ]
+    },
+    {
+        name: 'Stochastic Oscillator',
+        symbol: 'SO',
+        description: 'Stochastic Oscillator strategy',
+        signal: 'Buy when %K crosses above %D in oversold region; sell when %K crosses below %D in overbought region.',
+        requirements: '%K must be less than %D for buy signal; greater for sell signal.',
+        params: [
+            { 
+                name: 'periods', 
+                label: 'Periods', 
+                type: 'number', 
+                min: 5, 
+                max: 21, 
+                default: 14, 
+                step: 1,
+            },
+            { 
+                name: 'd_mw', 
+                label: 'D MW', 
+                type: 'number', 
+                min: 3, 
+                max: 9, 
+                default: 3, 
+                step: 1,
+            },
+        ]
+    }
 ];

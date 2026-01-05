@@ -14,7 +14,11 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ onClose, handleStrategyCh
 
     const handleStrategySelection = (strategy: Strategy) => {
         setSelectedStrategy(strategy);
-        setUserStrategy({ name: strategy.symbol, params: {} });
+        const defaultParams: any = {};
+        strategy.params.forEach(p => {
+            if (p.default !== undefined) defaultParams[p.name] = p.default;
+        });
+        setUserStrategy({ name: strategy.symbol, params: defaultParams });
     }
 
     const handleBack = () => {
@@ -99,24 +103,31 @@ const StrategyModal: React.FC<StrategyModalProps> = ({ onClose, handleStrategyCh
                                     
                                     <div className="space-y-3 max-h-80 overflow-y-auto">
                                         {selectedStrategy.params.map((param, index) => (
-                                            <div key={param + "_" + index} className="space-y-1">
+                                            <div key={param.name + "_" + index} className="space-y-1">
                                                 <label className="block text-xs font-medium text-muted">
-                                                    {param}
+                                                    {param.label}
                                                 </label>
                                                 <input
                                                     type="number"
-                                                    value={userStrategy.params[param] || ''}
+                                                    value={userStrategy.params[param.name] ?? param.default ?? ''}
                                                     placeholder="Enter value"
-                                                    min={0}
+                                                    min={param.min}
+                                                    max={param.max}
+                                                    step={param.step}
                                                     onChange={(e) => setUserStrategy({ 
                                                         ...userStrategy, 
                                                         params: {
                                                             ...userStrategy.params,
-                                                            [param]: Number(e.target.value)
+                                                            [param.name]: Number(e.target.value)
                                                         }
                                                     })}
                                                     className="w-full text-sm"
                                                 />
+                                                {param.explanation && (
+                                                    <p className="text-[10px] text-muted mt-0.5 leading-tight">
+                                                        {param.explanation}
+                                                    </p>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

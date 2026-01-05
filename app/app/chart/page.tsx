@@ -29,24 +29,45 @@ export default function ChartPage() {
 
   return (
     <PanelProvider>
-      <div className="flex-1 bg-[#09090b] overflow-hidden flex flex-col h-screen">
+      <div className="flex-1 bg-[#09090b] flex flex-col h-screen lg:overflow-hidden overflow-y-auto">
       {/* Page Header */}
-      <div className="p-6 border-b border-[#3f3f46]">
+      <div className="p-4 md:p-6 border-b border-[#3f3f46] flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#a78bfa] to-[#22d3ee] bg-clip-text text-transparent mb-2">
-              Trading Charts
-            </h1>
-            <p className="text-[#a1a1aa]">Real-time price charts and market data</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#a78bfa] to-[#22d3ee] bg-clip-text text-transparent mb-1 md:mb-2">
+                Trading Charts
+              </h1>
+              <p className="text-xs md:text-sm text-[#a1a1aa]">Real-time price charts and market data</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      {/* Mobile Pair Selector */}
+      <div className="lg:hidden border-b border-[#3f3f46] bg-[#18181b] flex-shrink-0">
+        <div className="flex overflow-x-auto p-2 gap-2 no-scrollbar">
+          {tradingPairs.map((pair) => (
+            <button
+              key={pair.symbol}
+              onClick={() => setSymbol(pair.symbol)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                selectedPair === pair.symbol
+                  ? "bg-[#7c3aed] text-white"
+                  : "bg-[#27272a] text-[#a1a1aa] hover:bg-[#3f3f46] hover:text-[#fafafa]"
+              }`}
+            >
+              {pair.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-row lg:overflow-hidden relative">
         {/* Left Sidebar - Trading Pairs */}
-        <div className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-[#3f3f46] bg-[#18181b] flex flex-col">
+        <div className="hidden lg:flex flex-col w-64 bg-[#18181b] border-r border-[#3f3f46]">
           {/* Search */}
-          <div className="p-3 md:p-4 border-b border-[#3f3f46]">
+          <div className="p-3 md:p-4 border-b border-[#3f3f46] flex items-center gap-2">
             <input
               type="text"
               placeholder="Search pairs..."
@@ -65,7 +86,9 @@ export default function ChartPage() {
                 {filteredPairs.map((item, index) => (
                   <button
                     key={index}
-                    onClick={() => setSymbol(item.symbol)}
+                    onClick={() => {
+                      setSymbol(item.symbol);
+                    }}
                     className={`w-full p-2 rounded-lg transition-all ${
                       selectedPair === item.symbol
                         ? "bg-gradient-to-r from-[#7c3aed]/20 to-[#06b6d4]/20 border border-[#7c3aed]/30"
@@ -87,9 +110,9 @@ export default function ChartPage() {
         </div>
 
         {/* Main Chart Area */}
-        <div className="flex-1 flex flex-col bg-[#09090b]">
+        <div className="flex-1 flex flex-col bg-[#09090b] min-w-0">
           {/* Pair Info */}
-          <div className="bg-[#18181b] border-b border-[#3f3f46] p-3 md:p-4">
+          <div className="bg-[#18181b] border-b border-[#3f3f46] p-3 md:p-4 flex-shrink-0">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-6">
               <div>
                 <div className="flex items-center gap-2">
@@ -124,13 +147,13 @@ export default function ChartPage() {
           </div>
 
           {/* Chart */}
-          <div className="flex-1 bg-[#18181b] overflow-hidden relative flex flex-row" style={{ maxHeight: 'calc(100vh - 320px)' }}>
-            <div className="flex-1 relative">
+          <div className="flex-1 bg-[#18181b] relative flex flex-col lg:flex-row lg:overflow-hidden">
+            <div className="w-full h-[60vh] lg:h-full lg:flex-1 relative min-h-0">
               <FinancialChart />
             </div>
             
             {/* Strategy Builder Panel */}
-            <div className="w-80 h-full border-l border-[#3f3f46]">
+            <div className="w-full lg:w-80 h-[600px] lg:h-full border-t lg:border-t-0 lg:border-l border-[#3f3f46]">
               <StrategyBuilder />
             </div>
           </div>

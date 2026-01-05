@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import axiosInstance from '../_api/axios';
 import { useServerWebsocket } from './server.websocket';
+import { strategyList } from '../_constants/strategy';
 
 export interface StrategyParams {
   [key: string]: any;
@@ -76,11 +77,15 @@ interface BacktestContextType {
 const BacktestContext = createContext<BacktestContextType | undefined>(undefined);
 
 export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedStrategy, setSelectedStrategy] = useState('SMA');
-  const [strategyParams, setStrategyParams] = useState<StrategyParams>({
-    sma_s: 50,
-    sma_l: 200,
+  // Get default strategy (first in list)
+  const defaultStrategy = strategyList[0];
+  const defaultParams: StrategyParams = {};
+  defaultStrategy.params.forEach(p => {
+      if (p.default !== undefined) defaultParams[p.name] = p.default;
   });
+
+  const [selectedStrategy, setSelectedStrategy] = useState(defaultStrategy.symbol);
+  const [strategyParams, setStrategyParams] = useState<StrategyParams>(defaultParams);
   
   const [backtestParams, setBacktestParams] = useState<BacktestParams>({
     symbol: 'BTCUSDT',
@@ -92,10 +97,7 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     leverage: 1,
     strategyParams: {
       strategies: {
-        SMA: {
-          sma_s: 50,
-          sma_l: 200,
-        },
+        [defaultStrategy.symbol]: defaultParams,
       },
     },
   });

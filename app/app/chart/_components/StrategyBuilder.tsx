@@ -1,39 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Play, Loader2, X } from 'lucide-react';
 import { useBacktest } from '../../_provider/backtest.context';
 import { useWebsocket } from '../../_provider/binance.websocket';
 import { usePanel } from '../../_provider/panel.context';
 import BacktestResults from './BacktestResults';
-
-const STRATEGIES = [
-  { id: 'SMA', name: 'SMA Crossover', description: 'Simple Moving Average crossover strategy' },
-  { id: 'RSI', name: 'RSI', description: 'Relative Strength Index strategy' },
-  { id: 'MACD', name: 'MACD', description: 'Moving Average Convergence Divergence' },
-  { id: 'Bollinger', name: 'Bollinger Bands', description: 'Bollinger Bands breakout strategy' },
-];
-
-const STRATEGY_PARAMS_CONFIG: Record<string, Array<{ name: string; label: string; min: number; max: number; default: number; step: number }>> = {
-  SMA: [
-    { name: 'sma_s', label: 'Short Period', min: 5, max: 100, default: 50, step: 1 },
-    { name: 'sma_l', label: 'Long Period', min: 50, max: 300, default: 200, step: 1 },
-  ],
-  RSI: [
-    { name: 'rsi_period', label: 'RSI Period', min: 5, max: 30, default: 14, step: 1 },
-    { name: 'oversold', label: 'Oversold', min: 10, max: 40, default: 30, step: 1 },
-    { name: 'overbought', label: 'Overbought', min: 60, max: 90, default: 70, step: 1 },
-  ],
-  MACD: [
-    { name: 'fast', label: 'Fast Period', min: 5, max: 20, default: 12, step: 1 },
-    { name: 'slow', label: 'Slow Period', min: 20, max: 40, default: 26, step: 1 },
-    { name: 'signal', label: 'Signal Period', min: 5, max: 15, default: 9, step: 1 },
-  ],
-  Bollinger: [
-    { name: 'period', label: 'Period', min: 10, max: 50, default: 20, step: 1 },
-    { name: 'std', label: 'Std Dev', min: 1, max: 4, default: 2, step: 0.1 },
-  ],
-};
+import { strategyList } from '../../_constants/strategy';
+import { Strategy, StrategyParam } from '../../_types/startegy';
 
 export default function StrategyBuilder() {
   const { symbol, interval } = useWebsocket();
@@ -50,13 +24,40 @@ export default function StrategyBuilder() {
     error,
   } = useBacktest();
 
+  const validationError = useMemo(() => {
+    if (!selectedStrategy) return null;
+    
+    const params = strategyParams;
+
+    switch (selectedStrategy) {
+      case 'SMA':
+        if (params.sma_s && params.sma_l && params.sma_s >= params.sma_l) {
+          return 'Short Period must be less than Long Period';
+        }
+        break;
+      case 'MACD':
+        if (params.fast && params.slow && params.fast >= params.slow) {
+          return 'Fast Period must be less than Slow Period';
+        }
+        break;
+      case 'RSI':
+        if (params.oversold && params.overbought && params.oversold >= params.overbought) {
+          return 'Oversold level must be less than Overbought level';
+        }
+        break;
+    }
+    return null;
+  }, [selectedStrategy, strategyParams]);
+
   // Initialize strategy params when strategy changes
   useEffect(() => {
-    const config = STRATEGY_PARAMS_CONFIG[selectedStrategy];
-    if (config) {
+    const strategy: Strategy | undefined = strategyList.find(s => s.symbol === selectedStrategy);
+    if (strategy) {
       const defaultParams: any = {};
-      config.forEach(param => {
-        defaultParams[param.name] = param.default;
+      strategy.params.forEach((param: StrategyParam) => {
+        if (param.default !== undefined) {
+            defaultParams[param.name] = param.default;
+        }
       });
       setStrategyParams(defaultParams);
     }
@@ -85,10 +86,11 @@ export default function StrategyBuilder() {
     }));
   };
 
-  const currentConfig = STRATEGY_PARAMS_CONFIG[selectedStrategy] || [];
+  const currentStrategy = strategyList.find(s => s.symbol === selectedStrategy);
+  const currentConfig = currentStrategy?.params || [];
 
   return (
-    <div className="flex flex-col h-full bg-[#18181b] border-l border-[#3f3f46]">
+    <div className="flex flex-col h-full bg-[#18181b]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#3f3f46] flex-shrink-0">
         <h3 className="text-base font-semibold text-text-primary flex items-center gap-2">
@@ -105,12 +107,12 @@ export default function StrategyBuilder() {
             Select Strategy
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {STRATEGIES.map(strategy => (
+            {strategyList.map((strategy: Strategy) => (
               <button
-                key={strategy.id}
-                onClick={() => setSelectedStrategy(strategy.id)}
+                key={strategy.symbol}
+                onClick={() => setSelectedStrategy(strategy.symbol)}
                 className={`p-2.5 rounded-lg text-center transition-all ${
-                  selectedStrategy === strategy.id
+                  selectedStrategy === strategy.symbol
                     ? 'bg-gradient-to-r from-[#7c3aed]/20 to-[#06b6d4]/20 border border-[#7c3aed]/50'
                     : 'bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46]'
                 }`}
@@ -120,6 +122,16 @@ export default function StrategyBuilder() {
             ))}
           </div>
         </div>
+
+        {/* Strategy Requirements */}
+        {currentStrategy?.requirements && (
+            <div className="p-2.5 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+                <p className="text-[10px] font-semibold text-blue-400 mb-1 uppercase tracking-wider">Requirements</p>
+                <p className="text-[11px] text-blue-200/80 leading-relaxed">
+                    {currentStrategy.requirements}
+                </p>
+            </div>
+        )}
 
         {/* Strategy Parameters */}
         {currentConfig.length > 0 && (
@@ -145,6 +157,11 @@ export default function StrategyBuilder() {
                     onChange={(e) => handleParamChange(param.name, parseFloat(e.target.value))}
                     className="w-full h-1.5 bg-[#27272a] rounded-lg appearance-none cursor-pointer accent-[#7c3aed]"
                   />
+                  {param.explanation && (
+                    <p className="text-[10px] text-text-secondary mt-1 leading-tight">
+                      {param.explanation}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -227,10 +244,20 @@ export default function StrategyBuilder() {
           </div>
         )}
 
+        {/* Validation Error */}
+        {validationError && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-2">
+            <div className="flex items-start gap-2">
+              <X className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-yellow-500">{validationError}</p>
+            </div>
+          </div>
+        )}
+
         {/* Run Button */}
         <button
           onClick={runBacktest}
-          disabled={isRunning}
+          disabled={isRunning || !!validationError}
           className="w-full bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] hover:from-[#6d28d9] hover:to-[#0891b2] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
         >
           {isRunning ? (
