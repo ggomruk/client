@@ -5,6 +5,7 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Navbar.module.css';
+import LogoutButton from './LogoutButton';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -110,10 +111,7 @@ const Navbar = () => {
             </Link>
           ))}
           {isAuthenticated && user && (
-            <button onClick={() => { logout(); setIsOpen(false); }} className={styles.mobileLogoutBtn}>
-              <LogoutIcon />
-              <span>Logout</span>
-            </button>
+            <LogoutButton />
           )}
         </div>
       )}

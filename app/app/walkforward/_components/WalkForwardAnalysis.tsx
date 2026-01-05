@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { optimizerService, WalkForwardDTO } from '../_api/optimizer.service';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Select } from './ui/select';
+import { optimizerService, WalkForwardDTO } from '../../_api/optimizer.service';
+import { Card } from '../../_components/ui/card';
+import { Button } from '../../_components/ui/button';
+import { Input } from '../../_components/ui/input';
+import { Select } from '../../_components/ui/select';
 import styles from './WalkForwardAnalysis.module.css';
 
 export default function WalkForwardAnalysis() {
