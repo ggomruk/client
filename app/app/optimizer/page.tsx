@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from "react";
 import { Sliders, Plus, X, Trophy, Download, TrendingUp, TrendingDown, Activity, Info, History as HistoryIcon } from "lucide-react";
 import { Card } from "../_components/ui/card";
@@ -91,7 +93,7 @@ const strategyParameters: Record<string, { value: string; label: string }[]> = {
   ]
 };
 
-export function OptimizerPage() {
+export default function OptimizerPage() {
   const { user, token } = useAuth();
   const { socket } = useServerWebsocket();
   

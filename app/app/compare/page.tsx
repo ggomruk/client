@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from "react";
 import { ClipboardList, Trophy, Download } from "lucide-react";
 import { Card } from "../_components/ui/card";
@@ -30,7 +32,7 @@ interface ComparisonResult {
   avgRank: number;
 }
 
-export function ComparePage() {
+export default function ComparePage() {
   const [backtests, setBacktests] = useState<Backtest[]>([]);
 
   const [metrics, setMetrics] = useState<Metric[]>([

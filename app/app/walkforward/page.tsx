@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from "react";
 import { TrendingUp as TrendingUpIcon, AlertCircle, Download } from "lucide-react";
 import { Card } from "../_components/ui/card";
@@ -35,7 +37,7 @@ const intervals = [
   { value: "1d", label: "1 Day" }
 ];
 
-export function WalkForwardPage() {
+export default function WalkForwardPage() {
   const [symbol, setSymbol] = useState("");
   const [interval, setInterval] = useState("");
   const [strategy, setStrategy] = useState("");
