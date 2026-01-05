@@ -83,7 +83,7 @@ export const ServerWebsocketProvider : React.FC<ServerWebsocketProviderProps> = 
             }
             _socket.disconnect();
         }
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user, setSocket]);
 
     return (
         <ServerWebsocketContext.Provider value={{socket, isConnected}}>

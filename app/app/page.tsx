@@ -1,15 +1,71 @@
 'use client';
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { StakingAssetCard } from './_components/StakingAssetCard'
 import { ActiveStaking } from './_components/ActiveStaking'
+import { binanceService, TickerData } from './_api/binance.service';
 
-// Mock chart data for Top Trading Pairs
-const ethereumData = [3200, 3150, 3180, 3220, 3190, 3250, 3300, 3280, 3320, 3350, 3380, 3420, 3450, 3480, 3520];
-const bnbData = [420, 410, 425, 430, 435, 445, 455, 460, 470, 475, 480, 485, 495, 500, 510];
-const polygonData = [1.2, 1.25, 1.22, 1.18, 1.15, 1.12, 1.1, 1.08, 1.05, 1.02, 0.98, 0.95, 0.92, 0.89, 0.87];
+interface MarketData {
+  symbol: string;
+  ticker: TickerData;
+  klines: number[];
+}
+
+const PAIRS = [
+  { symbol: 'BTCUSDT', name: 'Bitcoin', subtitle: 'BTC/USDT', iconColor: 'text-orange-500', iconBg: 'bg-gradient-to-br from-orange-500/20 to-orange-600/20', chartColor: '#f97316' },
+  { symbol: 'ETHUSDT', name: 'Ethereum', subtitle: 'ETH/USDT', iconColor: 'text-purple-500', iconBg: 'bg-gradient-to-br from-purple-500/20 to-purple-600/20', chartColor: '#7c3aed' },
+  { symbol: 'BNBUSDT', name: 'BNB Chain', subtitle: 'BNB/USDT', iconColor: 'text-yellow-500', iconBg: 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/20', chartColor: '#eab308' },
+  { symbol: 'SOLUSDT', name: 'Solana', subtitle: 'SOL/USDT', iconColor: 'text-teal-500', iconBg: 'bg-gradient-to-br from-teal-500/20 to-teal-600/20', chartColor: '#14b8a6' },
+];
 
 const AppPage = () => {
+    const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const promises = PAIRS.map(async (pair) => {
+                    const [ticker, klines] = await Promise.all([
+                        binanceService.get24hrTicker(pair.symbol),
+                        binanceService.getKlines(pair.symbol)
+                    ]);
+                    return { symbol: pair.symbol, ticker, klines };
+                });
+
+                const results = await Promise.all(promises);
+                const dataMap = results.reduce((acc, item) => {
+                    acc[item.symbol] = item;
+                    return acc;
+                }, {} as Record<string, MarketData>);
+
+                setMarketData(dataMap);
+            } catch (error) {
+                console.error("Failed to fetch market data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+        // Optional: Set up interval for polling
+        const interval = setInterval(fetchData, 10000); // 10 seconds
+        return () => clearInterval(interval);
+    }, []);
+
+    // Helper to format currency
+    const formatPrice = (price: string) => {
+        const p = parseFloat(price);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(p);
+    };
+
+    const formatVolume = (vol: string) => {
+        const v = parseFloat(vol);
+        if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+        if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+        return (v / 1e3).toFixed(2) + 'K';
+    };
+
     return (
         <div className="p-8">
             {/* Header */}
@@ -28,42 +84,31 @@ const AppPage = () => {
                     Top Trading Pairs
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StakingAssetCard
-                        name="Ethereum (ETH)"
-                        subtitle="ETH/USDT"
-                        percentage="13.62%"
-                        percentageChange="4.95%"
-                        isPositive={true}
-                        currentValue="$2,766"
-                        icon={<span className="text-purple-900 font-bold text-lg">◆</span>}
-                        iconBg="bg-gradient-to-br from-purple-500 to-purple-600"
-                        chartData={ethereumData}
-                        chartColor="#7c3aed"
-                    />
-                    <StakingAssetCard
-                        name="BNB Chain"
-                        subtitle="BNB/USDT"
-                        percentage="12.72%"
-                        percentageChange="5.67%"
-                        isPositive={true}
-                        currentValue="$2,090"
-                        icon={<span className="text-yellow-900 font-bold text-lg">◆</span>}
-                        iconBg="bg-gradient-to-br from-yellow-500 to-yellow-600"
-                        chartData={bnbData}
-                        chartColor="#06b6d4"
-                    />
-                    <StakingAssetCard
-                        name="Polygon (Matic)"
-                        subtitle="MATIC/USDT"
-                        percentage="6.29%"
-                        percentageChange="1.98%"
-                        isPositive={false}
-                        currentValue="$0.987"
-                        icon={<span className="text-purple-900 font-bold text-lg">◆</span>}
-                        iconBg="bg-gradient-to-br from-purple-400 to-purple-500"
-                        chartData={polygonData}
-                        chartColor="#8b5cf6"
-                    />
+                    {PAIRS.map((pair) => {
+                        const data = marketData[pair.symbol];
+                        const price = data ? formatPrice(data.ticker.lastPrice) : 'Loading...';
+                        const change = data ? parseFloat(data.ticker.priceChangePercent).toFixed(2) + '%' : '0.00%';
+                        const isPositive = data ? parseFloat(data.ticker.priceChangePercent) >= 0 : true;
+                        const volume = data ? formatVolume(data.ticker.quoteVolume) : '0';
+                        const chartData = data ? data.klines : [];
+
+                        return (
+                            <StakingAssetCard
+                                key={pair.symbol}
+                                name={pair.name}
+                                subtitle={pair.subtitle}
+                                percentage={price}
+                                percentageChange={change}
+                                isPositive={isPositive}
+                                currentValue={`Vol: $${volume}`}
+                                icon={<span className={`${pair.iconColor} font-bold text-lg`}>◆</span>}
+                                iconBg={pair.iconBg}
+                                chartData={chartData}
+                                chartColor={pair.chartColor}
+                                label="Price"
+                            />
+                        );
+                    })}
                 </div>
             </div>
 

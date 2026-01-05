@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { alertsService, CreateAlertDTO, Alert, AlertType, AlertStatus } from '../_api/alerts.service';
 import { io, Socket } from 'socket.io-client';
 
@@ -18,19 +18,27 @@ export default function AlertsPage() {
     message: '',
   });
 
-  useEffect(() => {
-    loadAlerts();
-    loadStats();
-    setupWebSocket();
-
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
+  const loadAlerts = useCallback(async () => {
+    try {
+      const data = await alertsService.getUserAlerts();
+      setAlerts(data);
+    } catch (err) {
+      console.error('Failed to load alerts:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const setupWebSocket = () => {
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await alertsService.getAlertStats();
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    }
+  }, []);
+
+  const setupWebSocket = useCallback(() => {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
 
@@ -55,27 +63,19 @@ export default function AlertsPage() {
     });
 
     setSocket(newSocket);
-  };
+  }, [loadAlerts, loadStats]);
 
-  const loadAlerts = async () => {
-    try {
-      const data = await alertsService.getUserAlerts();
-      setAlerts(data);
-    } catch (err) {
-      console.error('Failed to load alerts:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    loadAlerts();
+    loadStats();
+    setupWebSocket();
 
-  const loadStats = async () => {
-    try {
-      const data = await alertsService.getAlertStats();
-      setStats(data);
-    } catch (err) {
-      console.error('Failed to load stats:', err);
-    }
-  };
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [loadAlerts, loadStats, setupWebSocket]);
 
   const handleCreateAlert = async (e: React.FormEvent) => {
     e.preventDefault();

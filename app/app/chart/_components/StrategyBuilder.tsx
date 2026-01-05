@@ -60,7 +60,7 @@ export default function StrategyBuilder() {
       });
       setStrategyParams(defaultParams);
     }
-  }, [selectedStrategy]);
+  }, [selectedStrategy, setStrategyParams]);
 
   // Update symbol and interval when they change
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function StrategyBuilder() {
       symbol,
       interval,
     }));
-  }, [symbol, interval]);
+  }, [symbol, interval, setBacktestParams]);
 
   const handleParamChange = (paramName: string, value: number) => {
     setStrategyParams(prev => ({

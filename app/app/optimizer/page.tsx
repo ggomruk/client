@@ -331,7 +331,7 @@ export default function OptimizerPage() {
               </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-[#18181b] border-[#27272a] text-[#fafafa]">
                 <DialogHeader>
-                  <DialogTitle className="text-[#7c3aed] text-xl">The Core Concept: "Grid Search"</DialogTitle>
+                  <DialogTitle className="text-[#7c3aed] text-xl">The Core Concept: &quot;Grid Search&quot;</DialogTitle>
                   <DialogDescription className="text-[#a1a1aa]">
                     Understanding how the Strategy Optimizer works.
                   </DialogDescription>
@@ -340,7 +340,7 @@ export default function OptimizerPage() {
                 <div className="space-y-6 mt-4">
                   <div>
                     <p className="text-sm text-[#a1a1aa] leading-relaxed">
-                      Imagine you have a Moving Average strategy. You don't know if 50/200 is the best combination. Maybe 40/180 is better? Maybe 10/50?
+                      Imagine you have a Moving Average strategy. You don&apos;t know if 50/200 is the best combination. Maybe 40/180 is better? Maybe 10/50?
                       <br /><br />
                       Optimization is simply running <strong>hundreds of backtests automatically</strong> with different parameter combinations to find the one that makes the most money (or has the lowest risk).
                     </p>
@@ -575,7 +575,7 @@ export default function OptimizerPage() {
                       ))}
                       {config.parameters.length === 0 && (
                         <div className="text-center p-4 text-sm text-[#a1a1aa] italic">
-                          No parameters added. Click "Add Parameter" to start.
+                          No parameters added. Click &quot;Add Parameter&quot; to start.
                         </div>
                       )}
                     </div>

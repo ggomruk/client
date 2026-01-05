@@ -2,29 +2,40 @@
 
 import { faArrowCircleDown, faSearch, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import CRYPTO_SYMBOLS from '../_constants/crypto';
 import Image from 'next/image';
 import { useWebsocket } from "../_provider/binance.websocket";
 
+const PriceDisplay = ({ price, direction }: { price: number, direction: 'up' | 'down' | 'neutral' }) => {
+    const colorClass = direction === 'up' ? "status-success" : direction === 'down' ? "status-error" : "text-text-primary";
+    return (
+        <span className={`text-xl font-semibold ${colorClass}`}>
+            ${price.toFixed(2)}
+        </span>
+    );
+};
+
 const Panel = () => {
     const { symbolData, symbol, setSymbol } = useWebsocket();
     const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
-    const [currentPrice, setCurrentPrice] = React.useState<number>(0);
     const [searchContent, setSearchContent] = React.useState<string>('');
-    const prevPriceRef = useRef<number>(0);
 
-    useEffect(() => {
-        if (symbolData?.lastPrice !== undefined) {
-            setCurrentPrice(parseFloat((symbolData.lastPrice).toFixed(2)));
-        }
-    }, [symbolData?.lastPrice]);
+    const currentPrice = symbolData?.lastPrice ? parseFloat((symbolData.lastPrice).toFixed(2)) : 0;
 
-    useEffect(() => {
-        if (currentPrice !== prevPriceRef.current) {
-            prevPriceRef.current = currentPrice;
+    const [prevPrice, setPrevPrice] = useState(currentPrice);
+    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | 'neutral'>('neutral');
+
+    if (currentPrice !== prevPrice) {
+        setPrevPrice(currentPrice);
+        if (currentPrice > prevPrice) {
+            setPriceDirection('up');
+        } else if (currentPrice < prevPrice) {
+            setPriceDirection('down');
         }
-    }, [currentPrice]);
+    }
+
+    // const PriceDisplay = ... // Moved outside
 
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
         if (event.key === 'Escape' && dropdownOpen) {
@@ -118,9 +129,7 @@ const Panel = () => {
             <div className="flex flex-col items-center justify-center px-4 border-l border-primary-300">
                 <p className="text-muted text-xs mb-1">Mark Price</p>
                 {symbolData !== null ? (
-                    <span className={`text-xl font-semibold ${currentPrice > prevPriceRef.current ? "status-success" : currentPrice < prevPriceRef.current ? "status-error" : "text-text-primary"}`}>
-                        ${currentPrice.toFixed(2)}
-                    </span>
+                    <PriceDisplay price={currentPrice} direction={priceDirection} />
                 ) : (
                     <div className="skeleton h-6 w-20"></div>
                 )}

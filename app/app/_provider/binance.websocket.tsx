@@ -19,9 +19,6 @@ const getIntervalSeconds = (interval: string): number => {
     }
 };
 
-// Normalize a kline close-time/any timestamp into the bar's *open* time (start of interval)
-// in seconds. This ensures we update the same in-progress candle instead of appending
-// duplicates within the same interval.
 const normalizeToBarStartSeconds = (tSeconds: number, interval: string): number => {
     const s = getIntervalSeconds(interval);
     if (!Number.isFinite(tSeconds) || tSeconds <= 0 || !Number.isFinite(s) || s <= 0) return tSeconds;
@@ -101,13 +98,12 @@ export const WebsocketProvider = ({ children }: IWebsocketProviderProps) => {
     };
 
     useEffect(() => {
-        // CRITICAL: Clear old data immediately when symbol/interval changes
-        // to prevent showing stale data from previous timeframe
-        setKlineData([]);
-        setisHistoryDataFetched(false);
         oldestTimestampRef.current = null;
         
         const fetchData = async () => {
+            setKlineData([]);
+            setisHistoryDataFetched(false);
+
             try {
                 console.log(`[fetchData] Fetching new data for ${symbol} ${interval}`);
                 

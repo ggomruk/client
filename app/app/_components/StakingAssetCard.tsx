@@ -12,6 +12,7 @@ interface StakingAssetCardProps {
   iconBg: string;
   chartData: number[];
   chartColor: string;
+  label?: string;
 }
 
 export function StakingAssetCard({
@@ -25,6 +26,7 @@ export function StakingAssetCard({
   iconBg,
   chartData,
   chartColor,
+  label = "24h Change",
 }: StakingAssetCardProps) {
   const data = chartData.map((value, index) => ({ value, index }));
 
@@ -48,7 +50,7 @@ export function StakingAssetCard({
 
       {/* Percentage */}
       <div className="mb-3">
-        <div className="text-xs text-[#a1a1aa] mb-1">24h Change</div>
+        <div className="text-xs text-[#a1a1aa] mb-1">{label}</div>
         <div className="flex items-baseline gap-2">
           <span className="text-2xl text-[#fafafa] font-bold">{percentage}</span>
           <div className={`flex items-center gap-1 text-xs font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}>

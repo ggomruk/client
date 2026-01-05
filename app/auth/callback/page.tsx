@@ -9,26 +9,29 @@ function AuthCallbackContent() {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('Processing authentication...');
 
+  // Initialize state based on URL params lazily if possible, or use a separate effect that doesn't trigger immediate re-renders if not needed.
+  // Better yet, derive state during render if it's just for display, but here we have side effects (redirects).
+  
   useEffect(() => {
     const token = searchParams.get('token');
     const error = searchParams.get('message');
 
     if (error) {
-      setStatus('error');
-      setMessage(`Authentication failed: ${error}`);
-      
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        router.push('/login');
-      }, 3000);
-      return;
+        setTimeout(() => {
+            setStatus('error');
+            setMessage(`Authentication failed: ${error}`);
+        }, 0);
+        setTimeout(() => router.push('/login'), 3000);
+        return;
     }
-
+    
     if (token) {
       // Store the token
       localStorage.setItem('token', token);
-      setStatus('success');
-      setMessage('Authentication successful! Redirecting to dashboard...');
+      setTimeout(() => {
+          setStatus('success');
+          setMessage('Authentication successful! Redirecting to dashboard...');
+      }, 0);
       
       // Redirect to app after a brief delay
       setTimeout(() => {
@@ -37,8 +40,10 @@ function AuthCallbackContent() {
         window.location.href = '/app';
       }, 1500);
     } else {
-      setStatus('error');
-      setMessage('No authentication token received');
+      setTimeout(() => {
+          setStatus('error');
+          setMessage('No authentication token received');
+      }, 0);
       
       setTimeout(() => {
         router.push('/login');

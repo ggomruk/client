@@ -29,12 +29,9 @@ const FinancialChart = () => {
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick">|null>(null);
     const indicatorRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map());
 
-    // Track last rendered bar time (seconds) to prevent lightweight-charts "Cannot update oldest data" errors
-    // and to ensure we update-in-place for the currently-forming candle.
     const lastCandleTimeRef = useRef<number | null>(null);
     const lastIndicatorTimeRef = useRef<Map<string, number | null>>(new Map());
 
-    // Track interval changes so we can hard-reset chart state when switching timeframes.
     const previousIntervalRef = useRef<string>(interval);
     
     const [indicators, setIndicators] = useState<IndicatorsState>({
@@ -66,8 +63,6 @@ const FinancialChart = () => {
     };
 
     const toUtcTimestamp = (t: unknown): UTCTimestamp => {
-        // lightweight-charts expects seconds since epoch (number) for UTCTimestamp.
-        // IMPORTANT: We should never return an object (BusinessDay) here.
         if (typeof t === 'number' && Number.isFinite(t)) {
             // If a ms timestamp slips in, normalize it.
             const maybeMs = t > 4_000_000_000 ? Math.floor(t / 1000) : t;
@@ -78,29 +73,22 @@ const FinancialChart = () => {
             if (Number.isFinite(parsed)) return toUtcTimestamp(parsed);
         }
         if (t instanceof Date) return Math.floor(t.getTime() / 1000) as UTCTimestamp;
-        // Attempt to unwrap { time: ... } or similar shapes.
         if (t && typeof t === 'object' && 'time' in (t as any)) {
             return toUtcTimestamp((t as any).time);
         }
-        // As a last resort, use "now" to avoid crashing the chart.
-        return Math.floor(Date.now() / 1000) as UTCTimestamp;
+        return 0 as UTCTimestamp; // Return a safe fallback or handle it upstream
     };
 
     const volumeByTimeRef = useRef<Map<number, number>>(new Map());
 
     const normalizeCandles = (raw: any[]): CandlestickData[] => {
-        // The goal: dedupe any actual duplicate timestamps (e.g., websocket sending multiple updates
-        // for the same in-progress bar), but DON'T collapse different historical bars.
-        
         const byTime = new Map<number, CandlestickData>();
         const vol = new Map<number, number>();
 
         for (const item of raw) {
-            // Convert to numeric seconds. REST data should already be proper bar-start times.
             const t = toUtcTimestamp(item.time) as unknown as number;
             if (!Number.isFinite(t) || t <= 0) continue;
 
-            // Dedupe: if same time already exists, replace with latest OHLC (websocket updates).
             byTime.set(t, {
                 time: t as unknown as UTCTimestamp,
                 open: Number(item.open),
@@ -487,7 +475,7 @@ const FinancialChart = () => {
 
                 shouldFollowLatestRef.current = true;
                 userForcedFollowRef.current = true;
-                setIsFollowingLatest(true);
+                setTimeout(() => setIsFollowingLatest(true), 0);
 
                 // Clear the series so the next setData paints a clean timeline.
                 candleSeriesRef.current.setData([]);
