@@ -809,15 +809,14 @@ const FinancialChart = () => {
                 {/* Floating Indicators Panel */}
                 {showIndicators && (
                     <div 
-                        className={`absolute ${getIndicatorsTopOffset()} left-6 bg-[#18181b] border border-[#3f3f46] rounded-xl shadow-2xl p-6`}
+                        className={`absolute ${getIndicatorsTopOffset()} left-4 md:left-6 bg-[#18181b] border border-[#3f3f46] rounded-xl shadow-2xl p-4 md:p-6 w-[calc(100vw-2rem)] md:w-[512px]`}
                         style={{ 
-                            width: '512px', 
                             zIndex: getIndicatorsZIndex(),
                             maxHeight: 'calc(100vh - 400px)',
                             overflowY: 'auto'
                         }}
                     >
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {Object.entries(indicators).map(([key, config]) => (
                                 <div key={key} className="flex flex-col gap-3">
                                     {/* Checkbox and Label */}

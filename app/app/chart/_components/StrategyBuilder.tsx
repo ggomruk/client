@@ -90,7 +90,7 @@ export default function StrategyBuilder() {
   const currentConfig = currentStrategy?.params || [];
 
   return (
-    <div className="flex flex-col h-full bg-[#18181b]">
+    <div className="flex flex-col lg:h-full h-auto bg-[#18181b]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#3f3f46] flex-shrink-0">
         <h3 className="text-base font-semibold text-text-primary flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function StrategyBuilder() {
       </div>
 
       {/* Content - Scrollable */}
-      <div className="px-4 py-4 space-y-4 overflow-y-auto flex-1">
+      <div className="px-4 py-4 space-y-4 lg:overflow-y-auto lg:flex-1 min-h-0">
         {/* Strategy Selection */}
         <div>
           <label className="block text-xs font-medium text-text-primary mb-2">
@@ -117,7 +117,7 @@ export default function StrategyBuilder() {
                     : 'bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46]'
                 }`}
               >
-                <div className="text-xs font-medium text-text-primary">{strategy.name}</div>
+                <div className="text-xs font-medium text-text-primary">{strategy.symbol}</div>
               </button>
             ))}
           </div>
@@ -143,7 +143,7 @@ export default function StrategyBuilder() {
               {currentConfig.map(param => (
                 <div key={param.name}>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs text-text-secondary">{param.label}</span>
+                    <span className="text-xs text-text-secondary">{param.name}</span>
                     <span className="text-xs font-medium text-text-primary">
                       {strategyParams[param.name] || param.default}
                     </span>

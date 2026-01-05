@@ -153,7 +153,7 @@ export default function ChartPage() {
             </div>
             
             {/* Strategy Builder Panel */}
-            <div className="w-full lg:w-80 h-[600px] lg:h-full border-t lg:border-t-0 lg:border-l border-[#3f3f46]">
+            <div className="w-full lg:w-80 lg:h-full h-auto border-t lg:border-t-0 lg:border-l border-[#3f3f46]">
               <StrategyBuilder />
             </div>
           </div>
