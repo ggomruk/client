@@ -17,6 +17,7 @@ export interface BacktestParams {
   usdt: number;
   tc: number;
   leverage: number;
+  strategyName?: string;
   strategyParams: {
     strategies: {
       [strategyName: string]: StrategyParams;
@@ -242,9 +243,14 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTradeMarkers([]);
 
     try {
+      // Generate strategy name if not provided
+      const autoName = backtestParams.strategyName || 
+        `${selectedStrategy}_${Object.entries(strategyParams).map(([k, v]) => `${k}${v}`).join('_')}_${new Date().getTime()}`;
+      
       // Update strategy params in backtest params
       const updatedParams = {
         ...backtestParams,
+        strategyName: autoName,
         strategyParams: {
           strategies: {
             [selectedStrategy]: strategyParams,

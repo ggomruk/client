@@ -101,6 +101,23 @@ export default function StrategyBuilder() {
 
       {/* Content - Scrollable */}
       <div className="px-4 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
+        {/* Strategy Name */}
+        <div>
+          <label className="block text-xs font-medium text-text-primary mb-2">
+            Strategy Name (Optional)
+          </label>
+          <input
+            type="text"
+            placeholder="Auto-generated if empty"
+            value={backtestParams.strategyName || ''}
+            onChange={(e) => handleBacktestParamChange('strategyName', e.target.value)}
+            className="w-full bg-[#27272a] border border-[#3f3f46] rounded-lg px-3 py-2 text-sm text-text-primary placeholder-[#71717a] focus:outline-none focus:border-[#7c3aed]"
+          />
+          <p className="text-[10px] text-text-secondary mt-1">
+            Give your strategy a memorable name for easy comparison
+          </p>
+        </div>
+
         {/* Strategy Selection */}
         <div>
           <label className="block text-xs font-medium text-text-primary mb-2">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useRef, useEffect, useState } from 'react'
-import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp } from "lightweight-charts";
+import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, HistogramData } from "lightweight-charts";
 import { useWebsocket } from '../../_provider/binance.websocket';
 import { usePanel } from '../../_provider/panel.context';
 import { useBacktest } from '../../_provider/backtest.context';
@@ -27,6 +27,7 @@ const FinancialChart = () => {
     const chartContainerRef = useRef<HTMLDivElement|null>(null);
     const chartRef = useRef<IChartApi|null>(null);
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick">|null>(null);
+    const volumeSeriesRef = useRef<ISeriesApi<"Histogram">|null>(null);
     const indicatorRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map());
 
     const lastCandleTimeRef = useRef<number | null>(null);
@@ -273,8 +274,24 @@ const FinancialChart = () => {
             wickDownColor: '#EF4444',
         });
 
+        const volumeSeries = chart.addHistogramSeries({
+            color: '#26a69a',
+            priceFormat: {
+                type: 'volume',
+            },
+            priceScaleId: 'volume', 
+        });
+
+        chart.priceScale('volume').applyOptions({
+            scaleMargins: {
+                top: 0.8, // Place it at the bottom
+                bottom: 0,
+            },
+        });
+
         chartRef.current = chart;
         candleSeriesRef.current = candlestickSeries;
+        volumeSeriesRef.current = volumeSeries;
 
         // Setup ResizeObserver
         resizeObserverRef.current = new ResizeObserver(entries => {
@@ -479,6 +496,7 @@ const FinancialChart = () => {
 
                 // Clear the series so the next setData paints a clean timeline.
                 candleSeriesRef.current.setData([]);
+                volumeSeriesRef.current?.setData([]);
                 indicatorRefs.current.forEach((s) => {
                     try { s.setData([]); } catch { /* ignore */ }
                 });
@@ -499,10 +517,18 @@ const FinancialChart = () => {
             // Format + normalize all data (time in seconds, sorted)
             const formattedData = normalizeCandles(klineData);
             
+            // Format volume data
+            const volumeData: HistogramData[] = formattedData.map(item => ({
+                time: item.time,
+                value: volumeByTimeRef.current.get(item.time as unknown as number) || 0,
+                color: item.close >= item.open ? '#26a69a' : '#ef5350',
+            }));
+            
             // Decide between setData() and update()
             if (isInitialLoad || symbolChanged || intervalChanged || isHistoricalDataLoad) {
                 // Use setData for: initial load, symbol change, or historical data prepend
                 candleSeriesRef.current.setData(formattedData);
+                volumeSeriesRef.current?.setData(volumeData);
 
                 // Reset last-time tracking because setData() can contain older points.
                 lastCandleTimeRef.current = formattedData.length
@@ -549,6 +575,13 @@ const FinancialChart = () => {
                             ...lastFormattedCandle,
                             time: safeTime,
                         } as any);
+
+                        volumeSeriesRef.current?.update({
+                            time: safeTime,
+                            value: volumeByTimeRef.current.get(nextTime) || 0,
+                            color: lastFormattedCandle.close >= lastFormattedCandle.open ? '#26a69a' : '#ef5350',
+                        });
+
                         lastCandleTimeRef.current = nextTime;
                     } else {
                         // Skip older updates. They can arrive due to races between REST and websocket.
