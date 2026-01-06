@@ -17,8 +17,7 @@ const Navbar = () => {
     { href: '/app/chart', label: 'Chart', icon: <ChartIcon /> },
     { href: '/app/optimizer', label: 'Optimizer', icon: <OptimizerIcon /> },
     { href: '/app/compare', label: 'Compare', icon: <CompareIcon /> },
-    { href: '/app/walkforward', label: 'Walk-Forward', icon: <WalkForwardIcon /> },
-    { href: '/app/alerts', label: 'Alerts', icon: <AlertsIcon /> },
+    // { href: '/app/walkforward', label: 'Walk-Forward', icon: <WalkForwardIcon /> },
     { href: '/app/history', label: 'History', icon: <HistoryIcon /> },
   ];
 
@@ -155,14 +154,6 @@ const WalkForwardIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
     <path d="M3 10H10M10 10L7 7M10 10L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M10 10H17M17 10L14 7M17 10L14 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const AlertsIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <path d="M10 6V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M10 14H10.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="currentColor" strokeWidth="2"/>
   </svg>
 );
 

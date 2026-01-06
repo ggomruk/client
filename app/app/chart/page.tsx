@@ -147,13 +147,13 @@ export default function ChartPage() {
           </div>
 
           {/* Chart */}
-          <div className="flex-1 bg-[#18181b] relative flex flex-col lg:flex-row lg:overflow-hidden">
-            <div className="w-full h-[60vh] lg:h-full lg:flex-1 relative min-h-0">
+          <div className="flex-1 bg-[#18181b] flex flex-col xl:flex-row min-h-0 overflow-hidden">
+            <div className="w-full min-h-[400px] xl:min-h-0 xl:h-full xl:flex-1 overflow-hidden">
               <FinancialChart />
             </div>
             
             {/* Strategy Builder Panel */}
-            <div className="w-full lg:w-80 lg:h-full h-auto border-t lg:border-t-0 lg:border-l border-[#3f3f46]">
+            <div className="w-full xl:w-80 xl:h-full border-t xl:border-t-0 xl:border-l border-[#3f3f46] overflow-y-auto">
               <StrategyBuilder />
             </div>
           </div>
