@@ -38,9 +38,9 @@ export default function ComparePage() {
   const [metrics, setMetrics] = useState<Metric[]>([
     { id: "total_return", name: "Total Return", description: "Overall profit/loss percentage", selected: true },
     { id: "sharpe_ratio", name: "Sharpe Ratio", description: "Risk-adjusted return metric", selected: true },
-    // { id: "max_drawdown", name: "Max Drawdown", description: "Largest peak-to-trough decline", selected: true },
-    // { id: "profit_factor", name: "Profit Factor", description: "Ratio of gross profit to gross loss", selected: false },
-    // { id: "win_rate", name: "Win Rate", description: "Percentage of winning trades", selected: false },
+    { id: "max_drawdown", name: "Max Drawdown", description: "Largest peak-to-trough decline", selected: true },
+    { id: "profit_factor", name: "Profit Factor", description: "Ratio of gross profit to gross loss", selected: false },
+    { id: "win_rate", name: "Win Rate", description: "Percentage of winning trades", selected: false },
     { id: "total_trades", name: "Total Trades", description: "Number of executed trades", selected: false },
   ]);
 
@@ -89,13 +89,28 @@ export default function ComparePage() {
       
       const comparisonResults: ComparisonResult[] = selectedBacktests.map(b => {
         const perf = b.result?.performance || {};
+        
+        // Helper to safely parse float
+        const safeFloat = (val: any) => {
+            const parsed = parseFloat(val);
+            return isNaN(parsed) ? 0 : parsed;
+        };
+
+        // Convert cstrategy (multiplier) to percentage return
+        // e.g. 1.2 -> 20%, 0.9 -> -10%
+        const totalReturn = perf.cstrategy ? (safeFloat(perf.cstrategy) - 1) * 100 : 0;
+        
+        // Convert max_drawdown to percentage
+        // e.g. -0.2 -> -20%
+        const maxDrawdown = perf.max_drawdown ? safeFloat(perf.max_drawdown) * 100 : 0;
+
         const metrics: Record<string, number> = {
-          total_return: perf.cstrategy ? parseFloat(perf.cstrategy.toFixed(2)) : 0,
-          sharpe_ratio: perf.sharpe ? parseFloat(perf.sharpe.toFixed(2)) : 0,
-          max_drawdown: 0, 
-          profit_factor: 0, 
-          win_rate: 0, 
-          total_trades: perf.trades || 0,
+          total_return: parseFloat(totalReturn.toFixed(2)),
+          sharpe_ratio: perf.sharpe ? parseFloat(safeFloat(perf.sharpe).toFixed(2)) : 0,
+          max_drawdown: parseFloat(maxDrawdown.toFixed(2)),
+          profit_factor: perf.profit_factor ? parseFloat(safeFloat(perf.profit_factor).toFixed(2)) : 0, 
+          win_rate: perf.win_rate ? parseFloat((safeFloat(perf.win_rate) * 100).toFixed(2)) : 0, 
+          total_trades: safeFloat(perf.trades) || 0,
         };
         
         return {
