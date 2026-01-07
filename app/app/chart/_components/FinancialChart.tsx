@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useRef, useEffect, useState } from 'react'
-import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, HistogramData } from "lightweight-charts";
+import { createChart, ColorType, LineStyle, CrosshairMode, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, HistogramData, MouseEventParams } from "lightweight-charts";
 import { useWebsocket } from '../../_provider/binance.websocket';
 import { usePanel } from '../../_provider/panel.context';
 import { useBacktest } from '../../_provider/backtest.context';
@@ -22,13 +22,27 @@ interface IndicatorsState {
 const FinancialChart = () => {
     const { klineData, loadMoreData, isLoadingMore, symbol, interval, setInterval } = useWebsocket();
     const { showIndicators, setShowIndicators, panelStack, updatePanelStack } = usePanel();
-    const { tradeMarkers } = useBacktest();
+    const { 
+        tradeMarkers, 
+        isSelectingDate, 
+        selectionStart, 
+        selectionEnd, 
+        toggleSelectionMode, 
+        setSelectionRange, 
+        setBacktestParams 
+    } = useBacktest();
 
     const chartContainerRef = useRef<HTMLDivElement|null>(null);
     const chartRef = useRef<IChartApi|null>(null);
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick">|null>(null);
     const volumeSeriesRef = useRef<ISeriesApi<"Histogram">|null>(null);
+    const selectionSeriesRef = useRef<ISeriesApi<"Histogram">|null>(null);
     const indicatorRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map());
+
+    const klineDataRef = useRef<any[]>([]);
+    useEffect(() => {
+        klineDataRef.current = klineData;
+    }, [klineData]);
 
     const lastCandleTimeRef = useRef<number | null>(null);
     const lastIndicatorTimeRef = useRef<Map<string, number | null>>(new Map());
@@ -289,9 +303,22 @@ const FinancialChart = () => {
             },
         });
 
+        // Selection Overlay Series
+        const selectionSeries = chart.addHistogramSeries({
+            color: 'rgba(99, 102, 241, 0.4)', // Indigo-500 with opacity
+            priceScaleId: 'selection_overlay',
+            priceFormat: { type: 'custom', formatter: () => '' },
+        });
+        
+        chart.priceScale('selection_overlay').applyOptions({
+            scaleMargins: { top: 0, bottom: 0 },
+            visible: false,
+        });
+
         chartRef.current = chart;
         candleSeriesRef.current = candlestickSeries;
         volumeSeriesRef.current = volumeSeries;
+        selectionSeriesRef.current = selectionSeries;
 
         // Setup ResizeObserver
         resizeObserverRef.current = new ResizeObserver(entries => {
@@ -669,16 +696,142 @@ const FinancialChart = () => {
         }
     }, [klineData, indicators, symbol, interval]);
 
-    // Update trade markers
+    // Selection Mode - Click Handler
+    useEffect(() => {
+        if (!chartRef.current) return;
+        
+        const handleChartClick = (param: MouseEventParams) => {
+            if (!isSelectingDate || !param.time) return;
+            
+            const time = param.time as number;
+            
+            if (selectionStart === null) {
+                // First click: Set Start
+                setSelectionRange(time, null);
+            } else if (selectionEnd === null) {
+                // Second click: Set End and Finish
+                // Ensure start < end
+                let start = selectionStart;
+                let end = time;
+                if (start > end) {
+                    [start, end] = [end, start];
+                }
+                
+                setSelectionRange(start, end);
+                
+                // Update Backtest Params
+                const startDate = new Date(start * 1000).toISOString().split('T')[0];
+                const endDate = new Date(end * 1000).toISOString().split('T')[0];
+                
+                setBacktestParams(prev => ({
+                    ...prev,
+                    startDate,
+                    endDate
+                }));
+                
+                // Exit Selection Mode
+                toggleSelectionMode();
+            }
+        };
+        
+        chartRef.current.subscribeClick(handleChartClick);
+        
+        return () => {
+             // Only unsubscribe if chart instance still exists
+            if (chartRef.current) {
+                try {
+                    chartRef.current.unsubscribeClick(handleChartClick);
+                } catch(e) {
+                    // Ignore if chart is destroyed
+                }
+            }
+        };
+    }, [isSelectingDate, selectionStart, selectionEnd, setSelectionRange, toggleSelectionMode, setBacktestParams]);
+
+    // Selection Mode - Hover/Drag Handler (Shading)
+    useEffect(() => {
+        if (!chartRef.current || !selectionSeriesRef.current) return;
+
+        let animationFrameId: number;
+        let lastProcessedTime: number | null = null;
+
+        const handleSelectionMove = (param: MouseEventParams) => {
+            if (!isSelectingDate || !selectionStart || !param.time) {
+                 return;
+            }
+            
+            const current = param.time as number;
+            
+            // Optimization: Break the recursion cycle and debounce
+            // If the time hasn't changed, we don't need to update the chart again
+            if (current === lastProcessedTime) return;
+            lastProcessedTime = current;
+            
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            
+            animationFrameId = requestAnimationFrame(() => {
+                if (!selectionSeriesRef.current) return;
+
+                const start = Math.min(selectionStart, current);
+                const end = Math.max(selectionStart, current);
+                
+                const rawData = klineDataRef.current;
+                const histogramData: HistogramData[] = [];
+                
+                // Iterate to find candles in range
+                for (let i = 0; i < rawData.length; i++) {
+                    const item = rawData[i];
+                    // Hand-inlined timestamp conversion to avoid dependency issues
+                    let t: number = 0;
+                    if (typeof item.time === 'number') {
+                        t = item.time > 4_000_000_000 ? Math.floor(item.time / 1000) : item.time;
+                    } else if (typeof item.time === 'string') {
+                        const parsed = Number(item.time);
+                        if (Number.isFinite(parsed)) t = parsed > 4_000_000_000 ? Math.floor(parsed / 1000) : parsed;
+                        else t = Math.floor(new Date(item.time).getTime() / 1000);
+                    } else {
+                        t = Math.floor(new Date(item.time).getTime() / 1000);
+                    }
+
+                    if (t >= start && t <= end) {
+                        histogramData.push({
+                            time: t as UTCTimestamp,
+                            value: 1, 
+                            color: 'rgba(99, 102, 241, 0.3)' 
+                        });
+                    }
+                }
+                
+                selectionSeriesRef.current.setData(histogramData);
+            });
+        };
+
+        if (isSelectingDate && selectionStart) {
+            chartRef.current.subscribeCrosshairMove(handleSelectionMove);
+        } else {
+            // Clear visualization when not selecting or just starting
+            selectionSeriesRef.current.setData([]);
+        }
+
+        return () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (chartRef.current) {
+               try {
+                   chartRef.current.unsubscribeCrosshairMove(handleSelectionMove);
+               } catch(e) {}
+            }
+        };
+    }, [isSelectingDate, selectionStart]);
+
+    // Update all markers (Trade + Selection)
     useEffect(() => {
         if (!candleSeriesRef.current) return;
         
+        let allMarkers: any[] = [];
+        
+        // Add Trade Markers
         if (tradeMarkers.length > 0) {
-            // Sort markers by time
-            const sortedMarkers = [...tradeMarkers].sort((a, b) => a.time - b.time);
-            
-            // Convert to lightweight-charts format
-            const chartMarkers = sortedMarkers.map(m => ({
+            allMarkers = tradeMarkers.map(m => ({
                 time: m.time as UTCTimestamp,
                 position: m.position,
                 color: m.color,
@@ -686,12 +839,41 @@ const FinancialChart = () => {
                 text: m.text,
                 size: m.size,
             }));
-            
-            candleSeriesRef.current.setMarkers(chartMarkers);
-        } else {
-            candleSeriesRef.current.setMarkers([]);
         }
-    }, [tradeMarkers]);
+
+        // Add Selection Markers
+        if (isSelectingDate || selectionStart || selectionEnd) {
+             if (selectionStart) {
+                allMarkers.push({
+                    time: selectionStart as UTCTimestamp,
+                    position: 'aboveBar',
+                    color: '#6366F1', // Indigo-500
+                    shape: 'arrowDown',
+                    text: 'Start',
+                    size: 2
+                });
+            }
+            if (selectionEnd) {
+                allMarkers.push({
+                    time: selectionEnd as UTCTimestamp,
+                    position: 'aboveBar',
+                    color: '#6366F1', // Indigo-500
+                    shape: 'arrowDown',
+                    text: 'End',
+                    size: 2
+                });
+            }
+        }
+        
+        // Sort and Set
+        if (allMarkers.length > 0) {
+            allMarkers.sort((a, b) => (a.time as number) - (b.time as number));
+            candleSeriesRef.current.setMarkers(allMarkers);
+        } else {
+             candleSeriesRef.current.setMarkers([]);
+        }
+
+    }, [tradeMarkers, isSelectingDate, selectionStart, selectionEnd]);
 
     const updateIndicator = (key: keyof IndicatorsState, field: keyof IndicatorConfig, value: any) => {
         setIndicators(prev => ({

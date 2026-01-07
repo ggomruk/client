@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Play, Loader2, X } from 'lucide-react';
+import { Play, Loader2, X, MousePointerClick } from 'lucide-react';
 import { useBacktest } from '../../_provider/backtest.context';
 import { useWebsocket } from '../../_provider/binance.websocket';
 import { usePanel } from '../../_provider/panel.context';
@@ -22,6 +22,8 @@ export default function StrategyBuilder() {
     runBacktest,
     isRunning,
     error,
+    isSelectingDate,
+    toggleSelectionMode,
   } = useBacktest();
 
   const validationError = useMemo(() => {
@@ -187,9 +189,23 @@ export default function StrategyBuilder() {
 
         {/* Date Range */}
         <div>
-          <label className="block text-xs font-medium text-text-primary mb-2">
-            Date Range
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-xs font-medium text-text-primary">
+              Date Range
+            </label>
+            <button
+              onClick={toggleSelectionMode}
+              className={`text-[10px] px-2 py-0.5 rounded flex items-center gap-1.5 transition-all border ${
+                isSelectingDate 
+                  ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 animate-pulse' 
+                  : 'bg-[#27272a] border-[#3f3f46] text-text-secondary hover:text-white hover:border-[#71717a]'
+              }`}
+              title="Click two points on the chart to select range"
+            >
+              <MousePointerClick size={12} />
+              {isSelectingDate ? 'Select 2 points...' : 'Select on Chart'}
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs text-text-secondary">From</label>

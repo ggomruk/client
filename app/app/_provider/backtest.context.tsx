@@ -73,6 +73,13 @@ interface BacktestContextType {
   
   runBacktest: () => Promise<void>;
   clearResults: () => void;
+
+  // Selection Mode
+  isSelectingDate: boolean;
+  selectionStart: number | null;
+  selectionEnd: number | null;
+  toggleSelectionMode: () => void;
+  setSelectionRange: (start: number | null, end: number | null) => void;
 }
 
 const BacktestContext = createContext<BacktestContextType | undefined>(undefined);
@@ -108,6 +115,25 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [error, setError] = useState<string | null>(null);
   const [tradeMarkers, setTradeMarkers] = useState<TradeMarker[]>([]);
   
+  // Selection Mode State
+  const [isSelectingDate, setIsSelectingDate] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<number | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
+
+  const toggleSelectionMode = useCallback(() => {
+    setIsSelectingDate(prev => !prev);
+    // Reset selection when starting new mode
+    if (!isSelectingDate) {
+      setSelectionStart(null);
+      setSelectionEnd(null);
+    }
+  }, [isSelectingDate]);
+
+  const setSelectionRange = useCallback((start: number | null, end: number | null) => {
+    setSelectionStart(start);
+    setSelectionEnd(end);
+  }, []);
+
   const { socket } = useServerWebsocket();
 
   // Helper to generate trade markers from backtest result
@@ -293,6 +319,11 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTradeMarkers,
     runBacktest,
     clearResults,
+    isSelectingDate,
+    selectionStart,
+    selectionEnd,
+    toggleSelectionMode,
+    setSelectionRange,
   };
 
   return (
