@@ -75,7 +75,7 @@ export default function SignupPage() {
     setIsLoading(true);
     
     try {
-      await signup(formData.username, formData.email, formData.password);
+      await signup(formData.username, formData.password, formData.email);
       // Navigation is handled in AuthContext
     } catch (err: any) {
       setError(err.message || 'Signup failed');
@@ -293,6 +293,50 @@ export default function SignupPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Password Requirements */}
+                  <div className="mt-3 grid grid-cols-1 gap-2">
+                    <div className="flex items-center gap-2">
+                      {formData.password.length >= 8 ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" />
+                      ) : (
+                        <div className="w-3.5 h-3.5 rounded-full border border-[#52525b]" />
+                      )}
+                      <span className={`text-xs ${formData.password.length >= 8 ? "text-[#e4e4e7]" : "text-[#71717a]"}`}>
+                        At least 8 characters
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/[a-z]/.test(formData.password) && /[A-Z]/.test(formData.password) ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" />
+                      ) : (
+                        <div className="w-3.5 h-3.5 rounded-full border border-[#52525b]" />
+                      )}
+                      <span className={`text-xs ${/[a-z]/.test(formData.password) && /[A-Z]/.test(formData.password) ? "text-[#e4e4e7]" : "text-[#71717a]"}`}>
+                        Uppercase & lowercase letters
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/[0-9]/.test(formData.password) ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" />
+                      ) : (
+                        <div className="w-3.5 h-3.5 rounded-full border border-[#52525b]" />
+                      )}
+                      <span className={`text-xs ${/[0-9]/.test(formData.password) ? "text-[#e4e4e7]" : "text-[#71717a]"}`}>
+                         At least one number
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/[^a-zA-Z0-9]/.test(formData.password) ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" />
+                      ) : (
+                        <div className="w-3.5 h-3.5 rounded-full border border-[#52525b]" />
+                      )}
+                      <span className={`text-xs ${/[^a-zA-Z0-9]/.test(formData.password) ? "text-[#e4e4e7]" : "text-[#71717a]"}`}>
+                        At least one special character
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Confirm Password Field */}
