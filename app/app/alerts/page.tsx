@@ -42,7 +42,7 @@ export default function AlertsPage() {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
 
-    const newSocket = io('http://localhost:4000/ws', {
+    const newSocket = io('http://localhost:3001/ws', {
       transports: ['websocket'],
     });
 

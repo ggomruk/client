@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { TrendingUp, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -9,131 +10,114 @@ function AuthCallbackContent() {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('Processing authentication...');
 
-  // Initialize state based on URL params lazily if possible, or use a separate effect that doesn't trigger immediate re-renders if not needed.
-  // Better yet, derive state during render if it's just for display, but here we have side effects (redirects).
-  
   useEffect(() => {
     const token = searchParams.get('token');
     const error = searchParams.get('message');
 
     if (error) {
-        setTimeout(() => {
-            setStatus('error');
-            setMessage(`Authentication failed: ${error}`);
-        }, 0);
-        setTimeout(() => router.push('/login'), 3000);
+        setStatus('error');
+        setMessage(`Authentication failed: ${error}`);
+        setTimeout(() => router.push('/login'), 4000);
         return;
     }
     
     if (token) {
       // Store the token
       localStorage.setItem('token', token);
-      setTimeout(() => {
-          setStatus('success');
-          setMessage('Authentication successful! Redirecting to dashboard...');
-      }, 0);
+      setStatus('success');
+      setMessage('Authentication successful! Redirecting to dashboard...');
       
       // Redirect to app after a brief delay
       setTimeout(() => {
         router.push('/app');
         // Force a reload to trigger AuthContext to load the new token
+        // window.location.href = '/app'; // Using router.push is smoother if AuthContext listens to storage or is re-mounted. 
+        // But since AuthContext reads generic "token" on mount, a hard reload might be safer for now.
         window.location.href = '/app';
       }, 1500);
     } else {
-      setTimeout(() => {
-          setStatus('error');
-          setMessage('No authentication token received');
-      }, 0);
-      
-      setTimeout(() => {
-        router.push('/login');
-      }, 3000);
+      // If we land here without token/error, wait a bit in case it's a slow hydration or something, 
+      // but usually searchParams are ready.
+       // However, to be safe against double-renders:
+       const timeout = setTimeout(() => {
+          if (status === 'processing') {
+             setStatus('error');
+             setMessage('No authentication token received');
+             setTimeout(() => {
+                router.push('/login');
+              }, 3000);
+          }
+       }, 2000);
+       return () => clearTimeout(timeout);
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, status]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <div className="max-w-md w-full bg-white p-10 rounded-xl shadow-2xl">
-        <div className="text-center">
-          {status === 'processing' && (
-            <>
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mb-4">
-                <svg
-                  className="animate-spin h-8 w-8 text-indigo-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Processing...
-              </h2>
-            </>
-          )}
+    <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-[#7c3aed] rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+          style={{
+            animation: 'float-blob 8s ease-in-out infinite',
+            animationDelay: '0s'
+          }}
+        ></div>
+        <div 
+          className="absolute top-1/3 -right-20 w-96 h-96 bg-[#06b6d4] rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+          style={{
+            animation: 'float-blob 8s ease-in-out infinite',
+            animationDelay: '2s'
+          }}
+        ></div>
+        <div 
+          className="absolute -bottom-32 left-1/3 w-96 h-96 bg-[#7c3aed] rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+          style={{
+            animation: 'float-blob 8s ease-in-out infinite',
+            animationDelay: '4s'
+          }}
+        ></div>
+      </div>
 
-          {status === 'success' && (
-            <>
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                <svg
-                  className="h-8 w-8 text-green-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Success!
-              </h2>
-            </>
-          )}
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-[#18181b]/80 backdrop-blur-xl border border-[#3f3f46] rounded-2xl p-8 shadow-2xl text-center">
+            
+            <div className="mb-6 flex justify-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+            </div>
 
-          {status === 'error' && (
-            <>
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                <svg
-                  className="h-8 w-8 text-red-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Authentication Failed
-              </h2>
-            </>
-          )}
+            <h2 className="text-2xl font-bold text-[#fafafa] mb-2">
+              {status === 'processing' && 'Verifying...'}
+              {status === 'success' && 'Welcome Back!'}
+              {status === 'error' && 'Authentication Failed'}
+            </h2>
+            
+            <div className="py-6 flex justify-center">
+               {status === 'processing' && (
+                  <Loader2 className="w-12 h-12 text-[#7c3aed] animate-spin" />
+               )}
+               {status === 'success' && (
+                  <CheckCircle className="w-12 h-12 text-[#22c55e]" />
+               )}
+               {status === 'error' && (
+                  <XCircle className="w-12 h-12 text-red-500" />
+               )}
+            </div>
 
-          <p className="text-gray-600">{message}</p>
+            <p className="text-[#a1a1aa] mb-4">
+              {message}
+            </p>
+
+            {status === 'error' && (
+                 <button
+                 onClick={() => router.push('/login')}
+                  className="mt-4 px-6 py-2 bg-[#27272a] hover:bg-[#3f3f46] text-[#fafafa] rounded-lg transition-colors border border-[#3f3f46]"
+                 >
+                 Back to Login
+                 </button>
+            )}
         </div>
       </div>
     </div>
@@ -143,12 +127,9 @@ function AuthCallbackContent() {
 export default function AuthCallbackPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
+       <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-[#7c3aed] animate-spin" />
+       </div>
     }>
       <AuthCallbackContent />
     </Suspense>

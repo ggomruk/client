@@ -1,7 +1,7 @@
 // API service for alerts features
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 export enum AlertType {
   PRICE_ABOVE = 'price_above',
