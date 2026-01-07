@@ -10,6 +10,7 @@ interface IndicatorConfig {
     enabled: boolean;
     period: number;
     color: string;
+    stdDev?: number;
 }
 
 interface IndicatorsState {
@@ -17,6 +18,7 @@ interface IndicatorsState {
     ema2: IndicatorConfig;
     sma1: IndicatorConfig;
     sma2: IndicatorConfig;
+    bollinger: IndicatorConfig;
 }
 
 const FinancialChart = () => {
@@ -48,12 +50,14 @@ const FinancialChart = () => {
     const lastIndicatorTimeRef = useRef<Map<string, number | null>>(new Map());
 
     const previousIntervalRef = useRef<string>(interval);
+    const previousKlineDataRef = useRef<any[]>(klineData);
     
     const [indicators, setIndicators] = useState<IndicatorsState>({
         ema1: { enabled: true, period: 12, color: '#F59E0B' },
         ema2: { enabled: true, period: 26, color: '#8B5CF6' },
         sma1: { enabled: false, period: 50, color: '#10B981' },
         sma2: { enabled: false, period: 200, color: '#EF4444' },
+        bollinger: { enabled: false, period: 20, stdDev: 2, color: '#3B82F6' },
     });
 
     const previousIndicatorsRef = useRef<IndicatorsState>(indicators);
@@ -223,6 +227,32 @@ const FinancialChart = () => {
         }
         
         return smaData;
+    };
+
+    // Calculate Bollinger Bands
+    const calculateBollingerBands = (data: any[], period: number, stdDevMultiplier: number) => {
+        if (data.length < period) return { upper: [], middle: [], lower: [] };
+
+        const upper: LineData[] = [];
+        const middle: LineData[] = [];
+        const lower: LineData[] = [];
+
+        for (let i = 0; i < data.length; i++) {
+             if (i < period - 1) continue;
+
+             const slice = data.slice(i - period + 1, i + 1);
+             const sum = slice.reduce((acc: number, val: any) => acc + val.close, 0);
+             const sma = sum / period;
+
+             const variance = slice.reduce((acc: number, val: any) => acc + Math.pow(val.close - sma, 2), 0) / period;
+             const stdDev = Math.sqrt(variance);
+
+             const time = data[i].time;
+             middle.push({ time, value: sma });
+             upper.push({ time, value: sma + stdDev * stdDevMultiplier });
+             lower.push({ time, value: sma - stdDev * stdDevMultiplier });
+        }
+        return { upper, middle, lower };
     };
 
     // Initialize chart
@@ -479,13 +509,24 @@ const FinancialChart = () => {
         Object.entries(indicators).forEach(([key, config]) => {
             if (config.enabled) {
                 try {
-                    const series = chart.addLineSeries({
-                        color: config.color,
-                        lineWidth: 2,
-                        priceLineVisible: false,
-                        lastValueVisible: false,
-                    });
-                    indicatorRefs.current.set(key, series);
+                    if (key === 'bollinger') {
+                        // Create 3 lines for Bollinger
+                         const upper = chart.addLineSeries({ color: config.color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+                         const middle = chart.addLineSeries({ color: config.color, lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false }); // Making middle dotted or dashed
+                         const lower = chart.addLineSeries({ color: config.color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+                         
+                         indicatorRefs.current.set(`${key}_upper`, upper);
+                         indicatorRefs.current.set(`${key}_middle`, middle);
+                         indicatorRefs.current.set(`${key}_lower`, lower);
+                    } else {
+                        const series = chart.addLineSeries({
+                            color: config.color,
+                            lineWidth: 2,
+                            priceLineVisible: false,
+                            lastValueVisible: false,
+                        });
+                        indicatorRefs.current.set(key, series);
+                    }
                 } catch (error) {
                     console.error('Error adding indicator series:', error);
                 }
@@ -495,22 +536,20 @@ const FinancialChart = () => {
 
     // Update chart data
     useEffect(() => {
-        if (!candleSeriesRef.current || klineData.length === 0) return;
+        if (!candleSeriesRef.current) return;
         
         try {
             // Detect symbol/interval change
+            // Check this BEFORE klineData.length so we can reset even if data is loading
             const symbolChanged = previousSymbolRef.current !== symbol;
-            if (symbolChanged) {
-                isInitialLoadRef.current = true;
-                previousSymbolRef.current = symbol;
-                lastUpdateTimeRef.current = 0;
-            }
-
             const intervalChanged = previousIntervalRef.current !== interval;
-            if (intervalChanged) {
-                // Hard reset: avoid mixing different bar sizes (e.g. 1D -> 4H)
+            const isDataStale = klineData === previousKlineDataRef.current;
+            
+            if (symbolChanged || intervalChanged) {
+                // Hard reset: avoid mixing different bar sizes or symbols
                 // and avoid stray websocket messages arriving during the switch.
                 isInitialLoadRef.current = true;
+                previousSymbolRef.current = symbol;
                 previousIntervalRef.current = interval;
                 previousDataLengthRef.current = 0;
                 lastUpdateTimeRef.current = 0;
@@ -527,6 +566,15 @@ const FinancialChart = () => {
                 indicatorRefs.current.forEach((s) => {
                     try { s.setData([]); } catch { /* ignore */ }
                 });
+
+                if (isDataStale && klineData.length > 0) {
+                     return;
+                }
+            }
+
+            if (klineData.length === 0) {
+                 previousKlineDataRef.current = klineData;
+                 return;
             }
             
             const currentDataLength = klineData.length;
@@ -551,7 +599,6 @@ const FinancialChart = () => {
                 color: item.close >= item.open ? '#26a69a' : '#ef5350',
             }));
             
-            // Decide between setData() and update()
             if (isInitialLoad || symbolChanged || intervalChanged || isHistoricalDataLoad) {
                 // Use setData for: initial load, symbol change, or historical data prepend
                 candleSeriesRef.current.setData(formattedData);
@@ -562,7 +609,7 @@ const FinancialChart = () => {
                     ? (formattedData[formattedData.length - 1].time as unknown as number)
                     : null;
                 
-                if (isInitialLoad) {
+                if (isInitialLoad || symbolChanged) {
                     isInitialLoadRef.current = false;
                     // Auto-fit time and price on initial load (TradingView-like)
                     if (chartRef.current && candleSeriesRef.current) {
@@ -627,6 +674,7 @@ const FinancialChart = () => {
             previousDataLengthRef.current = currentDataLength;
             // Track last bar time in seconds (normalized). This is used for “new candle” detection.
             lastUpdateTimeRef.current = lastCandleTime;
+            previousKlineDataRef.current = klineData;
 
             // Maintain last bar OHLCV for overlay (when not hovering)
             if (formattedData.length) {
@@ -646,44 +694,80 @@ const FinancialChart = () => {
             // IMPORTANT: Use formattedData (normalized/deduped) not raw klineData to avoid duplicate times
             Object.entries(indicators).forEach(([key, config]) => {
                 if (config.enabled) {
-                    const series = indicatorRefs.current.get(key);
-                    if (series) {
-                        let data: LineData[] = [];
+                    if (key === 'bollinger') {
+                        const { upper, middle, lower } = calculateBollingerBands(formattedData, config.period, config.stdDev || 2);
                         
-                        if (key.startsWith('ema')) {
-                            data = calculateEMA(formattedData, config.period);
-                        } else if (key.startsWith('sma')) {
-                            data = calculateSMA(formattedData, config.period);
-                        }
-                        
-                        if (data.length > 0) {
-                            // Use same logic as candles: setData for full updates, update for incremental
-                            if (isInitialLoad || symbolChanged || intervalChanged || isHistoricalDataLoad || indicatorsChanged) {
-                                // Data is already normalized from formattedData, just need to dedupe by time
-                                const byTime = new Map<number, LineData>();
-                                for (const p of data) {
-                                    const t = toUtcTimestamp(p.time) as unknown as number;
-                                    byTime.set(t, { ...p, time: t as unknown as UTCTimestamp });
+                        ['upper', 'middle', 'lower'].forEach(suffix => {
+                            const series = indicatorRefs.current.get(`${key}_${suffix}`);
+                            const data = suffix === 'upper' ? upper : suffix === 'middle' ? middle : lower;
+                            
+                            if (series && data.length > 0) {
+                                if (isInitialLoad || symbolChanged || intervalChanged || isHistoricalDataLoad || indicatorsChanged) {
+                                    const byTime = new Map<number, LineData>();
+                                    for (const p of data) {
+                                        const t = toUtcTimestamp(p.time) as unknown as number;
+                                        byTime.set(t, { ...p, time: t as unknown as UTCTimestamp });
+                                    }
+                                    const normalized = Array.from(byTime.entries())
+                                        .sort((a, b) => a[0] - b[0])
+                                        .map(([, v]) => v);
+                                    series.setData(normalized);
+                                    lastIndicatorTimeRef.current.set(`${key}_${suffix}`, normalized.length ? (normalized[normalized.length - 1].time as unknown as number) : null);
+                                } else {
+                                    const lastPoint = data[data.length - 1];
+                                    if (lastPoint) {
+                                        const normalizedPoint = { ...lastPoint, time: toUtcTimestamp(lastPoint.time) };
+                                        const nextTime = normalizedPoint.time as unknown as number;
+                                        const prevTime = lastIndicatorTimeRef.current.get(`${key}_${suffix}`) ?? null;
+    
+                                        if (prevTime == null || nextTime >= prevTime) {
+                                            series.update(normalizedPoint);
+                                            lastIndicatorTimeRef.current.set(`${key}_${suffix}`, nextTime);
+                                        }
+                                    }
                                 }
-                                const normalized = Array.from(byTime.entries())
-                                    .sort((a, b) => a[0] - b[0])
-                                    .map(([, v]) => v);
-                                
-                                series.setData(normalized);
-                                lastIndicatorTimeRef.current.set(key, normalized.length ? (normalized[normalized.length - 1].time as unknown as number) : null);
-                            } else {
-                                // For real-time updates, just update the last point
-                                const lastPoint = data[data.length - 1];
-                                if (lastPoint) {
-                                    const normalizedPoint = { ...lastPoint, time: toUtcTimestamp(lastPoint.time) };
-                                    const nextTime = normalizedPoint.time as unknown as number;
-                                    const prevTime = lastIndicatorTimeRef.current.get(key) ?? null;
+                            }
+                        });
+                    } else {
+                        const series = indicatorRefs.current.get(key);
+                        if (series) {
+                            let data: LineData[] = [];
+                            
+                            if (key.startsWith('ema')) {
+                                data = calculateEMA(formattedData, config.period);
+                            } else if (key.startsWith('sma')) {
+                                data = calculateSMA(formattedData, config.period);
+                            }
+                            
+                            if (data.length > 0) {
+                                // Use same logic as candles: setData for full updates, update for incremental
+                                if (isInitialLoad || symbolChanged || intervalChanged || isHistoricalDataLoad || indicatorsChanged) {
+                                    // Data is already normalized from formattedData, just need to dedupe by time
+                                    const byTime = new Map<number, LineData>();
+                                    for (const p of data) {
+                                        const t = toUtcTimestamp(p.time) as unknown as number;
+                                        byTime.set(t, { ...p, time: t as unknown as UTCTimestamp });
+                                    }
+                                    const normalized = Array.from(byTime.entries())
+                                        .sort((a, b) => a[0] - b[0])
+                                        .map(([, v]) => v);
+                                    
+                                    series.setData(normalized);
+                                    lastIndicatorTimeRef.current.set(key, normalized.length ? (normalized[normalized.length - 1].time as unknown as number) : null);
+                                } else {
+                                    // For real-time updates, just update the last point
+                                    const lastPoint = data[data.length - 1];
+                                    if (lastPoint) {
+                                        const normalizedPoint = { ...lastPoint, time: toUtcTimestamp(lastPoint.time) };
+                                        const nextTime = normalizedPoint.time as unknown as number;
+                                        const prevTime = lastIndicatorTimeRef.current.get(key) ?? null;
 
-                                    if (prevTime == null || nextTime >= prevTime) {
-                                        series.update(normalizedPoint);
-                                        lastIndicatorTimeRef.current.set(key, nextTime);
-                                    } else {
-                                        // Skip older updates (same as candles)
+                                        if (prevTime == null || nextTime >= prevTime) {
+                                            series.update(normalizedPoint);
+                                            lastIndicatorTimeRef.current.set(key, nextTime);
+                                        } else {
+                                            // Skip older updates (same as candles)
+                                        }
                                     }
                                 }
                             }
@@ -891,6 +975,7 @@ const FinancialChart = () => {
             ema2: 'EMA',
             sma1: 'SMA',
             sma2: 'SMA',
+            bollinger: 'BB',
         };
         return labels[key] || key;
     };
@@ -1047,6 +1132,21 @@ const FinancialChart = () => {
                                         </span>
                                     </label>
                                     
+                                    {/* Color Picker */}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-text-secondary">Color</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-mono text-text-secondary">{config.color}</span>
+                                            <input
+                                                type="color"
+                                                value={config.color}
+                                                onChange={(e) => updateIndicator(key as keyof IndicatorsState, 'color', e.target.value)}
+                                                disabled={!config.enabled}
+                                                className="w-6 h-6 rounded cursor-pointer bg-transparent border border-[#3f3f46] p-0.5"
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Period Slider */}
                                     <div className="flex flex-col gap-5">
                                         <div className="flex items-center justify-between">
@@ -1075,6 +1175,36 @@ const FinancialChart = () => {
                                             />
                                         </div>
                                     </div>
+
+                                    {/* StdDev Slider for Bollinger Bands */}
+                                    {key === 'bollinger' && config.stdDev !== undefined && (
+                                        <div className="flex flex-col gap-5">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-text-secondary">StdDev</span>
+                                                <span className="text-xs font-semibold text-text-primary">{config.stdDev}</span>
+                                            </div>
+                                            
+                                            <div className="relative h-1.5 bg-[#27272a] rounded-full overflow-hidden">
+                                                <div 
+                                                    className="absolute h-full rounded-full transition-all"
+                                                    style={{
+                                                        width: `${((config.stdDev - 1) / (4 - 1)) * 100}%`,
+                                                        backgroundColor: config.enabled ? config.color : '#27272a'
+                                                    }}
+                                                />
+                                                <input
+                                                    type="range"
+                                                    min="1"
+                                                    max="4"
+                                                    step="0.1"
+                                                    value={config.stdDev}
+                                                    onChange={(e) => updateIndicator(key as keyof IndicatorsState, 'stdDev', parseFloat(e.target.value))}
+                                                    disabled={!config.enabled}
+                                                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
