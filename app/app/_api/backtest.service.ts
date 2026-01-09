@@ -24,7 +24,7 @@ export interface BacktestHistoryItem {
 
 export const backtestService = {
   getHistory: async (): Promise<BacktestHistoryItem[]> => {
-    const response = await axiosInstance.get<GeneralResponse<BacktestHistoryItem[]>>('/algo/backtest/history');
+    const response = await axiosInstance.get<GeneralResponse<BacktestHistoryItem[]>>('/backtest/history');
     return response.data.payload || [];
   },
 };

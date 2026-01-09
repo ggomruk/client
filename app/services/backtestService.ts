@@ -36,7 +36,7 @@ class BacktestService {
    */
   async submitBacktest(params: BacktestParams): Promise<SubmitBacktestResponse> {
     try {
-      const response = await axiosInstance.post<GeneralResponse<any>>('/algo/backtest', params);
+      const response = await axiosInstance.post<GeneralResponse<any>>('/backtest/run', params);
       
       if (response.data.isOk) {
         return {
@@ -63,7 +63,7 @@ class BacktestService {
    */
   async getBacktestResult(backtestId: string): Promise<GetBacktestResponse> {
     try {
-      const response = await axiosInstance.get<GeneralResponse<BacktestResult>>(`/algo/backtest/${backtestId}`);
+      const response = await axiosInstance.get<GeneralResponse<BacktestResult>>(`/backtest/${backtestId}`);
       
       if (response.data.isOk) {
         return {
@@ -90,7 +90,7 @@ class BacktestService {
    */
   async getUserBacktests(): Promise<GetBacktestsResponse> {
     try {
-      const response = await axiosInstance.get<GeneralResponse<BacktestResult[]>>('/algo/backtests');
+      const response = await axiosInstance.get<GeneralResponse<BacktestResult[]>>('/backtest/history');
       
       if (response.data.isOk) {
         return {

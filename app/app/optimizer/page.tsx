@@ -289,7 +289,7 @@ export default function OptimizerPage() {
       };
 
       const response = await axiosInstance.post(
-        `/algo/optimize`,
+        `/optimizer/optimize`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` }
