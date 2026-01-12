@@ -3,7 +3,7 @@ import './globals.css';
 import { AuthProvider } from "./contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Ggomruk - Algorithmic Trading Platform",
+  title: "Stratyx - Algorithmic Trading Platform",
   description: "Advanced algorithmic trading and backtesting platform",
 };
 

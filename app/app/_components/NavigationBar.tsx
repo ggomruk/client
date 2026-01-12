@@ -48,7 +48,7 @@ export function NavigationBar({ activeTab: propActiveTab, onTabChange }: Navigat
               <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] opacity-100"></div>
               <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-white relative z-10" />
             </div>
-            <span className="text-lg md:text-xl font-bold gradient-text">Ggomruk</span>
+            <span className="text-lg md:text-xl font-bold gradient-text">Stratyx</span>
           </div>
           
           {/* Desktop Navigation */}

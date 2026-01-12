@@ -26,7 +26,7 @@ export function Sidebar() {
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="text-[#fafafa] font-semibold">Ggomruk</div>
+            <div className="text-[#fafafa] font-semibold">Stratyx</div>
             <div className="text-xs text-[#a1a1aa]">Trading Analytics</div>
           </div>
         </div>

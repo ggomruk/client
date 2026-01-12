@@ -126,7 +126,7 @@ export default function SignupPage() {
                 <TrendingUp className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-[#fafafa]">Ggomruk</h1>
+                <h1 className="text-3xl font-bold text-[#fafafa]">Stratyx</h1>
                 <p className="text-sm text-[#a1a1aa]">Trading Strategy Platform</p>
               </div>
             </div>
@@ -184,7 +184,7 @@ export default function SignupPage() {
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-[#fafafa]">Ggomruk</h1>
+                  <h1 className="text-xl font-bold text-[#fafafa]">Stratyx</h1>
                   <p className="text-xs text-[#a1a1aa]">Trading Strategy Platform</p>
                 </div>
               </div>
