@@ -5,6 +5,8 @@ import { ClipboardList, Trophy, Download } from "lucide-react";
 import { Card } from "../_components/ui/card";
 import { Button } from "../_components/ui/button";
 import { backtestService } from "../_api/backtest.service";
+import axiosInstance from "../_api/axios";
+import { useToast } from "../_contexts/ToastContext";
 
 interface Backtest {
   id: string;
@@ -33,6 +35,7 @@ interface ComparisonResult {
 }
 
 export default function ComparePage() {
+  const { error } = useToast();
   const [backtests, setBacktests] = useState<Backtest[]>([]);
 
   const [metrics, setMetrics] = useState<Metric[]>([
@@ -81,43 +84,35 @@ export default function ComparePage() {
   const selectedMetrics = metrics.filter(m => m.selected);
   const canCompare = selectedCount >= 2 && selectedMetrics.length > 0;
 
-  const runComparison = () => {
+  const runComparison = async () => {
     setIsComparing(true);
     
-    setTimeout(() => {
+    try {
       const selectedBacktests = backtests.filter(b => b.selected);
+      const backtestIds = selectedBacktests.map(b => b.id);
+      const metricIds = selectedMetrics.map(m => m.id);
       
-      const comparisonResults: ComparisonResult[] = selectedBacktests.map(b => {
-        const perf = b.result?.performance || {};
-        
-        // Helper to safely parse float
-        const safeFloat = (val: any) => {
-            const parsed = parseFloat(val);
-            return isNaN(parsed) ? 0 : parsed;
-        };
+      console.log('Calling API with:', { backtestIds, metrics: metricIds });
+      
+      // Call the API server to compare strategies
+      const response = await axiosInstance.post('/optimizer/compare', {
+        backtestIds,
+        metrics: metricIds,
+      });
 
-        // Convert cstrategy (multiplier) to percentage return
-        // e.g. 1.2 -> 20%, 0.9 -> -10%
-        const totalReturn = perf.cstrategy ? (safeFloat(perf.cstrategy) - 1) * 100 : 0;
-        
-        // Convert max_drawdown to percentage
-        // e.g. -0.2 -> -20%
-        const maxDrawdown = perf.max_drawdown ? safeFloat(perf.max_drawdown) * 100 : 0;
-
-        const metrics: Record<string, number> = {
-          total_return: parseFloat(totalReturn.toFixed(2)),
-          sharpe_ratio: perf.sharpe ? parseFloat(safeFloat(perf.sharpe).toFixed(2)) : 0,
-          max_drawdown: parseFloat(maxDrawdown.toFixed(2)),
-          profit_factor: perf.profit_factor ? parseFloat(safeFloat(perf.profit_factor).toFixed(2)) : 0, 
-          win_rate: perf.win_rate ? parseFloat((safeFloat(perf.win_rate) * 100).toFixed(2)) : 0, 
-          total_trades: safeFloat(perf.trades) || 0,
-        };
-        
+      const data = response.data;
+      console.log('API Response:', data);
+      
+      const payload = data.payload || data;
+      
+      // Map API response to UI format
+      const comparisonResults: ComparisonResult[] = payload.comparison.map((item: any) => {
+        const backtest = selectedBacktests.find(b => b.id === item.backtestId);
         return {
-          backtestId: b.id,
-          name: b.name,
-          strategy: b.strategy,
-          metrics,
+          backtestId: item.backtestId,
+          name: backtest?.name || item.strategyName,
+          strategy: backtest?.strategy || item.strategyName,
+          metrics: item.metrics,
           ranks: {}, 
           avgRank: 0 
         };
@@ -126,11 +121,11 @@ export default function ComparePage() {
       // Calculate ranks
       selectedMetrics.forEach(metric => {
         const sorted = [...comparisonResults].sort((a, b) => {
-            return b.metrics[metric.id] - a.metrics[metric.id];
+          return b.metrics[metric.id] - a.metrics[metric.id];
         });
         
         sorted.forEach((res, idx) => {
-            res.ranks[metric.id] = idx + 1;
+          res.ranks[metric.id] = idx + 1;
         });
       });
 
@@ -146,8 +141,12 @@ export default function ComparePage() {
 
       setResults(comparisonResults);
       setBestStrategy(comparisonResults[0]);
+    } catch (err) {
+      console.error('Comparison failed:', err);
+      error('Failed to compare strategies. Please try again.');
+    } finally {
       setIsComparing(false);
-    }, 500);
+    }
   };
 
   return (
