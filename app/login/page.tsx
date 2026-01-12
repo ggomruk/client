@@ -83,7 +83,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-[#fafafa]">
-                  Stratyx
+                  stratyix
                 </h1>
                 <p className="text-sm text-[#a1a1aa]">
                   Trading Strategy Platform
@@ -160,7 +160,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-[#fafafa]">
-                    Stratyx
+                    stratyix
                   </h1>
                   <p className="text-xs text-[#a1a1aa]">
                     Trading Strategy Platform

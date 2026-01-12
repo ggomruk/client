@@ -3,7 +3,7 @@ import './globals.css';
 import { AuthProvider } from "./contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Stratyx - Algorithmic Trading Platform",
+  title: "stratyix - Algorithmic Trading Platform",
   description: "Advanced algorithmic trading and backtesting platform",
 };
 

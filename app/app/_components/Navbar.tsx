@@ -46,7 +46,7 @@ const Navbar = () => {
                 </defs>
               </svg>
             </div>
-            <span className={styles.logoText}>Stratyx</span>
+            <span className={styles.logoText}>stratyix</span>
           </Link>
         </div>
 
