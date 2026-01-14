@@ -31,7 +31,7 @@ export const ServerWebsocketProvider : React.FC<ServerWebsocketProviderProps> = 
             return;
         }
 
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:5678";
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:3001";
         const _socket = io(`${wsUrl}/ws`, { 
             transports: ['websocket'],
             reconnection: true,

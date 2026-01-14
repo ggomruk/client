@@ -42,7 +42,8 @@ export default function AlertsPage() {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
 
-    const newSocket = io('http://localhost:3001/ws', {
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
+    const newSocket = io(`${wsUrl}/ws`, {
       transports: ['websocket'],
     });
 
