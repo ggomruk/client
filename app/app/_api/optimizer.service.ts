@@ -10,14 +10,19 @@ export interface ParameterRange {
   step: number;
 }
 
+export interface StrategyConfig {
+  id: string;
+  type: string;
+  parameters: ParameterRange[];
+}
+
 export interface OptimizeStrategyDTO {
   symbol: string;
   interval: string;
   startDate: string;
   endDate: string;
-  strategies: string[];
-  paramRanges: ParameterRange[];
-  metric: 'sharpe' | 'return' | 'profit_factor' | 'win_rate';
+  strategies: StrategyConfig[];
+  metric?: 'sharpe' | 'return' | 'profit_factor' | 'win_rate';
   leverage?: number;
   commission?: number;
   usdt?: number;
