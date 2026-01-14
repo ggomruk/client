@@ -44,7 +44,8 @@ export default function AlertsPage() {
 
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
     const newSocket = io(`${wsUrl}/ws`, {
-      transports: ['websocket'],
+      path: '/socket.io/',
+      transports: ['websocket', 'polling'],
     });
 
     newSocket.emit('backtest:subscribe', { userId });

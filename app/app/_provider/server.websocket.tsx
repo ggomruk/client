@@ -32,11 +32,14 @@ export const ServerWebsocketProvider : React.FC<ServerWebsocketProviderProps> = 
         }
 
         const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:3001";
-        const _socket = io(`${wsUrl}/ws`, { 
-            transports: ['websocket'],
+        const _socket = io(`${wsUrl}/ws`, {
+            path: '/socket.io/',
+            transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionDelay: 1000,
-            reconnectionAttempts: 5
+            reconnectionAttempts: 5,
+            autoConnect: true,
+            forceNew: false
         });
 
         _socket.on('connect',  () => {
