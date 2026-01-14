@@ -1,5 +1,5 @@
 # Use Node.js LTS
-FROM node:24-alpine
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /usr/src/app
@@ -14,9 +14,12 @@ RUN npm ci
 COPY . .
 
 # Build the Next.js app
-# If you use public runtime config, ensure args are passed or hardcoded
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NEXT_PUBLIC_API_URL http://localhost:3001/api/v1
+# Pass build args for environment variables
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WS_URL
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-http://localhost:3001}
 RUN npm run build
 
 # Expose Next.js port

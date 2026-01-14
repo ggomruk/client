@@ -1,56 +1,99 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { TrendingUp, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
-  const [message, setMessage] = useState('Processing authentication...');
+  const hasExchanged = useRef(false);
+
+  const initialState = useMemo(() => {
+    const error = searchParams.get('message');
+    const urlToken = searchParams.get('token');
+    
+    if (error) {
+      return {
+        status: 'error' as const,
+        message: `Authentication failed: ${error}`,
+        needsRedirect: '/login',
+      };
+    }
+    if (urlToken) {
+      return {
+        status: 'success' as const,
+        message: 'Authentication successful! Redirecting to dashboard...',
+        token: urlToken,
+        needsRedirect: '/app',
+      };
+    }
+    return {
+      status: 'processing' as const,
+      message: 'Processing authentication...',
+    };
+  }, [searchParams]);
+
+  const [status, setStatus] = useState<'processing' | 'success' | 'error'>(initialState.status);
+  const [message, setMessage] = useState(initialState.message);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const error = searchParams.get('message');
-
-    if (error) {
-        setStatus('error');
-        setMessage(`Authentication failed: ${error}`);
-        setTimeout(() => router.push('/login'), 4000);
-        return;
-    }
-    
-    if (token) {
-      // Store the token
-      localStorage.setItem('token', token);
-      setStatus('success');
-      setMessage('Authentication successful! Redirecting to dashboard...');
-      
-      // Redirect to app after a brief delay
-      setTimeout(() => {
-        router.push('/app');
-        // Force a reload to trigger AuthContext to load the new token
-        // window.location.href = '/app'; // Using router.push is smoother if AuthContext listens to storage or is re-mounted. 
-        // But since AuthContext reads generic "token" on mount, a hard reload might be safer for now.
+    // Handle URL token (legacy flow)
+    if (initialState.token) {
+      localStorage.setItem('token', initialState.token);
+      const timeout = setTimeout(() => {
         window.location.href = '/app';
       }, 1500);
-    } else {
-      // If we land here without token/error, wait a bit in case it's a slow hydration or something, 
-      // but usually searchParams are ready.
-       // However, to be safe against double-renders:
-       const timeout = setTimeout(() => {
-          if (status === 'processing') {
-             setStatus('error');
-             setMessage('No authentication token received');
-             setTimeout(() => {
-                router.push('/login');
-              }, 3000);
-          }
-       }, 2000);
-       return () => clearTimeout(timeout);
+      return () => clearTimeout(timeout);
     }
-  }, [searchParams, router, status]);
+
+    // Handle error from URL
+    if (initialState.status === 'error') {
+      const timeout = setTimeout(() => router.push('/login'), 4000);
+      return () => clearTimeout(timeout);
+    }
+
+    // New secure flow: exchange httpOnly cookie for token
+    const exchangeToken = async () => {
+      // Prevent duplicate calls from React strict mode
+      if (hasExchanged.current) return;
+      hasExchanged.current = true;
+
+      try {
+        const response = await fetch(`${API_URL}/auth/exchange-token`, {
+          method: 'GET',
+          credentials: 'include', // Important: sends cookies
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success && data.data?.access_token) {
+          localStorage.setItem('token', data.data.access_token);
+          setStatus('success');
+          setMessage('Authentication successful! Redirecting to dashboard...');
+          setTimeout(() => {
+            window.location.href = '/app';
+          }, 1500);
+        } else {
+          setStatus('error');
+          setMessage(data.message || 'Failed to complete authentication');
+          setTimeout(() => router.push('/login'), 4000);
+        }
+      } catch (err) {
+        console.error('Token exchange error:', err);
+        setStatus('error');
+        setMessage('Network error during authentication');
+        setTimeout(() => router.push('/login'), 4000);
+      }
+    };
+
+    exchangeToken();
+  }, [searchParams, router, initialState]);
 
   return (
     <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 relative overflow-hidden">

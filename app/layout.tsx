@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import './globals.css';
 import { AuthProvider } from "./contexts/AuthContext";
+import ErrorBoundary from "./app/_components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "stratyix - Algorithmic Trading Platform",
@@ -15,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex flex-col">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -48,7 +48,7 @@ export interface AlertStats {
 
 class AlertsService {
   private getAuthHeader() {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('token');
     return {
       headers: {
         Authorization: `Bearer ${token}`,
