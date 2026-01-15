@@ -52,9 +52,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const userData = await authService.verifyToken(storedToken);
           setToken(storedToken);
           setUser(userData);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Token verification failed:', error);
-          localStorage.removeItem('token');
+          if (error.response?.status === 401) {
+             localStorage.removeItem('token');
+             setToken(null);
+             setUser(null);
+          }
         }
       }
       

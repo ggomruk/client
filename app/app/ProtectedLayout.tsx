@@ -65,7 +65,7 @@ export default function ProtectedLayout({
     <ToastProvider>
       <ServerWebsocketProvider>
         <BacktestProvider>
-          <WebsocketProvider>
+          {/* WebsocketProvider is now scoped to specific pages (like /chart) */}
             <div className="min-h-screen bg-[#09090b] flex flex-col">
               <Navbar />
               <main className="flex-1 overflow-y-auto">
@@ -73,7 +73,6 @@ export default function ProtectedLayout({
               </main>
             </div>
             <ToastContainer />
-          </WebsocketProvider>
         </BacktestProvider>
       </ServerWebsocketProvider>
     </ToastProvider>
