@@ -44,7 +44,7 @@ export default function HistoryCard({ item, onClick }: HistoryCardProps) {
   return (
     <div 
       onClick={onClick}
-      className="bg-zinc-900/70 border border-zinc-700/50 rounded-xl p-4 flex flex-col gap-3 w-full cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:border-violet-500/50 transition-all duration-200"
+      className="bg-zinc-900/70 border border-zinc-700/50 rounded-3xl p-4 flex flex-col gap-3 w-full cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:border-violet-500/50 transition-all duration-200"
     >
       {/* Header */}
       <div className="flex items-center justify-between h-7">

@@ -76,6 +76,104 @@
   }
 }
 
+@keyframes float-blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.2;
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+    opacity: 0.3;
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+    opacity: 0.25;
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(50px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(124, 58, 237, 0.3), 0 0 10px rgba(6, 182, 212, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.6), 0 0 30px rgba(6, 182, 212, 0.4);
+  }
+}
+
+@keyframes card-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.5s ease-out;
 }
@@ -98,6 +196,118 @@
 
 .animate-shimmer {
   animation: shimmer 2s linear infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-float-blob {
+  animation: float-blob 8s ease-in-out infinite;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s ease-out;
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 6s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-border-glow {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+.animate-card-float {
+  animation: card-float 3s ease-in-out infinite;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(24, 24, 27, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient border utility */
+.gradient-border {
+  position: relative;
+  background: #18181b;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Hover glow effect */
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
+}
+
+/* Card elevated style */
+.card-elevated {
+  background: #1e1e21;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-elevated:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 0 20px rgba(124, 58, 237, 0.4);
+}
+
+/* Gradient backgrounds */
+.gradient-bg-purple-cyan {
+  background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+}
+
+.gradient-bg-pink-orange {
+  background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+}
+
+.gradient-bg-blue-purple {
+  background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%);
+}
+
+.gradient-bg-green-cyan {
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
 }
 
 .animate-glow {

@@ -9,6 +9,28 @@
   animation: slideDown 0.4s ease-out;
 }
 
+/* Animated gradient line at top */
+.navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #7c3aed, #06b6d4, #7c3aed);
+  background-size: 200% 100%;
+  animation: gradient-line 3s linear infinite;
+}
+
+@keyframes gradient-line {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

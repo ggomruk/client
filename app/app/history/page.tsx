@@ -86,7 +86,20 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="w-full h-full min-h-screen bg-[#09090b] text-zinc-100 p-6 space-y-6">
+    <div className="w-full h-full min-h-screen bg-[#09090b] text-zinc-100 p-6 space-y-6 py-8 px-12 lg:px-16 xl:px-20 relative">
+      {/* Floating Particles Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div 
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-[#7c3aed] rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+          style={{ animation: 'float-blob 8s ease-in-out infinite' }}
+        />
+        <div 
+          className="absolute top-1/3 -right-20 w-96 h-96 bg-[#06b6d4] rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+          style={{ animation: 'float-blob 8s ease-in-out infinite', animationDelay: '2s' }}
+        />
+      </div>
+
+      <div className="relative z-10">
       {/* Header Section */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 border-b border-zinc-800 pb-6">
         <div className="flex items-start gap-4">
@@ -198,6 +211,7 @@ export default function HistoryPage() {
         onClose={() => setSelectedBacktest(null)} 
         backtest={selectedBacktest} 
       />
+      </div>
     </div>
   );
 }

@@ -339,7 +339,20 @@ export default function OptimizerPage() {
   }
 
   return (
-    <div className="overflow-y-auto p-8">
+    <div className="overflow-y-auto py-8 px-12 lg:px-16 xl:px-20 relative">
+      {/* Floating Particles Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div 
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-[#7c3aed] rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+          style={{ animation: 'float-blob 8s ease-in-out infinite' }}
+        />
+        <div 
+          className="absolute top-1/3 -right-20 w-96 h-96 bg-[#06b6d4] rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+          style={{ animation: 'float-blob 8s ease-in-out infinite', animationDelay: '2s' }}
+        />
+      </div>
+
+      <div className="relative z-10">
       {/* Page Header */}
       <div className="mb-8 animate-fadeIn">
         <div className="flex items-center justify-between mb-2">
@@ -762,6 +775,7 @@ export default function OptimizerPage() {
             </Card>
           </div>
         )}
+      </div>
       </div>
   );
 }

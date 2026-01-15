@@ -58,8 +58,8 @@ export function Select({
           <label className={cn(
             "absolute left-4 transition-all duration-300 pointer-events-none z-10",
             shouldFloat
-              ? "top-0 -translate-y-1/2 text-xs bg-[#141414] px-2 text-[#7c3aed] rounded-md" 
-              : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa] rounded-md"
+              ? "top-0 -translate-y-1/2 text-xs bg-[#141414] px-2 text-[#7c3aed] rounded-2xl" 
+              : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa] rounded-2xl"
           )}>
             {label}
           </label>
@@ -73,7 +73,7 @@ export function Select({
             setFocused(true);
           }}
           className={cn(
-            "w-full bg-[#27272a] border rounded-lg pl-4 pr-10 text-left flex items-center transition-all duration-300 focus:outline-none",
+            "w-full bg-[#27272a] border rounded-2xl pl-4 pr-10 text-left flex items-center transition-all duration-300 focus:outline-none",
             label ? (shouldFloat ? "py-3 h-[52px]" : "pt-6 pb-2 h-[52px]") : "py-3 h-[48px]",
             error ? "border-[#ff6467]" : focused ? "border-[#7c3aed] shadow-[0_0_0_3px_rgba(124,58,237,0.1)]" : "border-[#3f3f46]"
           )}
@@ -93,7 +93,7 @@ export function Select({
 
         {/* Options List */}
         {isOpen && (
-          <div className="absolute z-50 w-full mt-2 bg-[#18181b] border border-[#3f3f46] rounded-lg shadow-2xl overflow-hidden animate-slideIn">
+          <div className="absolute z-50 w-full mt-2 bg-[#18181b] border border-[#3f3f46] rounded-2xl shadow-2xl overflow-hidden animate-slideIn">
             <div className="max-h-60 overflow-y-auto">
               {options.map((option, index) => (
                 <button

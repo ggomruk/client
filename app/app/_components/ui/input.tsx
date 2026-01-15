@@ -70,8 +70,8 @@ export function Input({
           <label className={cn(
             "absolute left-4 transition-all duration-300 pointer-events-none z-10",
             shouldFloat
-              ? "top-0 -translate-y-1/2 text-xs bg-[#27272a] px-2 text-[#7c3aed] rounded-md" 
-              : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa] rounded-md",
+              ? "top-0 -translate-y-1/2 text-xs bg-[#27272a] px-2 text-[#7c3aed] rounded-2xl" 
+              : "top-1/2 -translate-y-1/2 text-sm text-[#a1a1aa] rounded-2xl",
             leftIcon && !shouldFloat ? "left-10" : ""
           )}>
             {label} {required && <span className="text-[#ff6467]">*</span>}
@@ -96,7 +96,7 @@ export function Input({
           max={max}
           step={step}
           className={cn(
-            "w-full bg-[#27272a] border rounded-lg px-4 text-[#fafafa] transition-all duration-300 focus:outline-none",
+            "w-full bg-[#27272a] border rounded-2xl px-4 text-[#fafafa] transition-all duration-300 focus:outline-none",
             // Consistent height with proper vertical alignment
             label ? (shouldFloat ? "py-3 h-[52px]" : "pt-6 pb-2 h-[52px]") : "py-3 h-[48px]",
             // Only show placeholder color when placeholder exists
@@ -121,7 +121,7 @@ export function Input({
               type="button"
               onClick={handleDecrement}
               disabled={min !== undefined && Number(value) <= min}
-              className="w-8 h-8 flex items-center justify-center bg-[#18181b]/80 backdrop-blur-sm border border-[#3f3f46] rounded-lg text-[#a1a1aa] hover:text-[#fafafa] hover:border-[#7c3aed] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#3f3f46] disabled:hover:text-[#a1a1aa]"
+              className="w-8 h-8 flex items-center justify-center bg-[#18181b]/80 backdrop-blur-sm border border-[#3f3f46] rounded-2xl text-[#a1a1aa] hover:text-[#fafafa] hover:border-[#7c3aed] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#3f3f46] disabled:hover:text-[#a1a1aa]"
             >
               <Minus className="w-4 h-4" />
             </button>
@@ -129,7 +129,7 @@ export function Input({
               type="button"
               onClick={handleIncrement}
               disabled={max !== undefined && Number(value) >= max}
-              className="w-8 h-8 flex items-center justify-center bg-[#18181b]/80 backdrop-blur-sm border border-[#3f3f46] rounded-lg text-[#a1a1aa] hover:text-[#fafafa] hover:border-[#7c3aed] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#3f3f46] disabled:hover:text-[#a1a1aa]"
+              className="w-8 h-8 flex items-center justify-center bg-[#18181b]/80 backdrop-blur-sm border border-[#3f3f46] rounded-2xl text-[#a1a1aa] hover:text-[#fafafa] hover:border-[#7c3aed] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#3f3f46] disabled:hover:text-[#a1a1aa]"
             >
               <Plus className="w-4 h-4" />
             </button>
