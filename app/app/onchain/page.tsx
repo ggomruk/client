@@ -38,6 +38,7 @@ import { onchainService, BlockchainType } from '../_api/onchain.service';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { PageNotReady } from '../_components/PageNotReady';
 
 // Exchanges we track (matching data server)
 const EXCHANGES = ['binance', 'coinbase', 'kraken', 'okx', 'bybit', 'bitfinex', 'kucoin', 'htx', 'gemini', 'gate.io', 'bitstamp', 'crypto.com'];
@@ -52,6 +53,9 @@ interface ExchangeFlowData {
 }
 
 export default function OnchainPage() {
+
+  const IS_MAINTENANCE_MODE = true;
+  
   const { user } = useAuth();
   const isPremium = user?.subscription === 'premium';
   
@@ -232,6 +236,21 @@ export default function OnchainPage() {
   const filteredWallets = wallets.filter(wallet =>
     selectedBlockchain === 'all' || wallet.blockchain === selectedBlockchain
   );
+
+  if (IS_MAINTENANCE_MODE) {
+      return (
+        <div className="h-full flex items-center justify-center p-6">
+          <PageNotReady 
+            title="On Chain Analysis"
+            description="We're upgrading our on chain analysis to support genetic algorithms and walk-forward analysis. This module will be back shortly with enhanced capabilities."
+            features={[
+              "Blockchain (BTC+ETH) Analysis"
+            ]}
+            estimatedTime="24 hours"
+          />
+        </div>
+      );
+    }
 
   return (
     <div className="p-8">
