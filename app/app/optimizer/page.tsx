@@ -19,6 +19,7 @@ import { useServerWebsocket } from "@/app/app/_provider/server.websocket";
 import { toast } from "sonner";
 import axiosInstance from "../_api/axios";
 import { OptimizationHistory } from "./_components/OptimizationHistory";
+import { PageNotReady } from "../_components/PageNotReady";
 
 interface ParameterRange {
   name: string;
@@ -94,6 +95,10 @@ const strategyParameters: Record<string, { value: string; label: string }[]> = {
 };
 
 export default function OptimizerPage() {
+  // Temporary maintenance mode flag
+  const IS_MAINTENANCE_MODE = true;
+
+  // All hooks must be called unconditionally at the top
   const { user, token } = useAuth();
   const { socket } = useServerWebsocket();
   
@@ -313,6 +318,25 @@ export default function OptimizerPage() {
     setResults(data.all);
     toast.success("Loaded optimization results");
   };
+
+  // Maintenance mode early return (after all hooks are called)
+  if (IS_MAINTENANCE_MODE) {
+    return (
+      <div className="h-full flex items-center justify-center p-6">
+        <PageNotReady 
+          title="AI Strategy Optimizer"
+          description="We're upgrading our optimization engine to support genetic algorithms and walk-forward analysis. This module will be back shortly with enhanced capabilities."
+          features={[
+            "Genetic Algorithm Engine",
+            "Walk-Forward Analysis", 
+            "Multi-Strategy Combination",
+            "Performance Heatmaps"
+          ]}
+          estimatedTime="24 hours"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-y-auto p-8">

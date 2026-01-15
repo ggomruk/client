@@ -486,6 +486,7 @@ const FinancialChart = () => {
         return () => {
             chart.unsubscribeCrosshairMove(handleCrosshairMove);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Update indicators when config changes
@@ -778,6 +779,7 @@ const FinancialChart = () => {
         } catch (error) {
             console.error('Error updating chart:', error);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [klineData, indicators, symbol, interval]);
 
     // Selection Mode - Click Handler

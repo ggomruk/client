@@ -77,6 +77,7 @@ export default function AlertsPage() {
         socket.disconnect();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadAlerts, loadStats, setupWebSocket]);
 
   const handleCreateAlert = async (e: React.FormEvent) => {

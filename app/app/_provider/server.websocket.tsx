@@ -3,6 +3,7 @@
 import { 
     useState,
     useEffect,
+    useRef,
     createContext,
     useContext, 
 } from "react";
@@ -21,6 +22,7 @@ interface ServerWebsocketProviderProps {
 }
 
 export const ServerWebsocketProvider : React.FC<ServerWebsocketProviderProps> = ({children}) => {
+    const socketRef = useRef<Socket | null>(null);
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const { user, isAuthenticated } = useAuth();
@@ -78,15 +80,19 @@ export const ServerWebsocketProvider : React.FC<ServerWebsocketProviderProps> = 
             console.error('❌ Connection error:', error.message);
         });
 
-        setSocket(_socket);
+        // Store in ref and update state
+        socketRef.current = _socket;
+        // Use setTimeout to avoid synchronous setState in effect
+        setTimeout(() => setSocket(_socket), 0);
 
         return () => {
             if (user) {
                 _socket.emit('backtest:unsubscribe', { userId: user.userId });
             }
             _socket.disconnect();
+            socketRef.current = null;
         }
-    }, [isAuthenticated, user, setSocket]);
+    }, [isAuthenticated, user]);
 
     return (
         <ServerWebsocketContext.Provider value={{socket, isConnected}}>
