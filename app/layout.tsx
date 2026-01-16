@@ -13,6 +13,12 @@ const urbanist = Urbanist({
 export const metadata: Metadata = {
   title: "stratyix - Algorithmic Trading Platform",
   description: "Advanced algorithmic trading and backtesting platform",
+  icons: {
+    icon: [
+      { url: '/logo/logo_128_128.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/logo/logo_256_256.svg',
+  },
 };
 
 export default function RootLayout({
