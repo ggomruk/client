@@ -73,6 +73,7 @@ interface BacktestContextType {
   
   runBacktest: () => Promise<void>;
   clearResults: () => void;
+  resetParams: () => void;
 
   // Selection Mode
   isSelectingDate: boolean;
@@ -305,6 +306,34 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTradeMarkers([]);
   }, []);
 
+  const resetParams = useCallback(() => {
+    const defStrategy = strategyList[0];
+    const defParams: StrategyParams = {};
+    defStrategy.params.forEach(p => {
+        if (p.default !== undefined) defParams[p.name] = p.default;
+    });
+
+    setSelectedStrategy(defStrategy.symbol);
+    setStrategyParams(defParams);
+    setBacktestParams({
+      symbol: 'BTCUSDT',
+      interval: '1d',
+      startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+      usdt: 10000,
+      tc: 0.001,
+      leverage: 1,
+      strategyParams: {
+        strategies: {
+          [defStrategy.symbol]: defParams,
+        },
+      },
+    });
+    setResult(null);
+    setError(null);
+    setTradeMarkers([]);
+  }, []);
+
   const value: BacktestContextType = {
     selectedStrategy,
     setSelectedStrategy,
@@ -319,6 +348,7 @@ export const BacktestProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTradeMarkers,
     runBacktest,
     clearResults,
+    resetParams,
     isSelectingDate,
     selectionStart,
     selectionEnd,

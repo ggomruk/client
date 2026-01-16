@@ -6,6 +6,7 @@ import { useWebsocket } from '../_provider/binance.websocket';
 import { PanelProvider } from '../_provider/panel.context';
 import StrategyBuilder from "./_components/StrategyBuilder";
 import FinancialChart from "./_components/FinancialChart";
+import { useBacktest } from "../_provider/backtest.context";
 
 const tradingPairs = [
   { name: "Bitcoin", symbol: "BTCUSDT" },
@@ -20,7 +21,15 @@ const tradingPairs = [
 
 export default function ChartPage() {
   const { symbol: selectedPair, setSymbol, symbolData } = useWebsocket();
+  const { resetParams } = useBacktest();
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    return () => {
+      resetParams();
+    };
+  }, [resetParams]);
+
 
   const filteredPairs = tradingPairs.filter(pair => 
     pair.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
