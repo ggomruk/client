@@ -96,7 +96,7 @@ const AppPage = () => {
                             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
                                 Good Morning 👋
                             </h1>
-                            <p className="text-sm md:text-base text-[#a1a1aa]">Here's your portfolio summary</p>
+                            <p className="text-sm md:text-base text-[#a1a1aa]">Here&apos;s your portfolio summary</p>
                         </div>
                         <button className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                             <Plus className="w-6 h-6 text-white" />

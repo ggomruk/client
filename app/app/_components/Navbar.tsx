@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from './Navbar.module.css';
 import LogoutButton from './LogoutButton';
@@ -36,16 +37,12 @@ const Navbar = () => {
         <div className={styles.leftSection}>
           <Link href="/app" className={styles.logo}>
             <div className={styles.logoIcon}>
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 20L16 12L20 16L28 8" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M20 8H28V16" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                <defs>
-                  <linearGradient id="gradient" x1="8" y1="8" x2="28" y2="20" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#7c3aed"/>
-                    <stop offset="1" stopColor="#06b6d4"/>
-                  </linearGradient>
-                </defs>
-              </svg>
+              <Image 
+                src="/logo/logo_128_128.svg" 
+                alt="Stratyix Logo" 
+                width={42} 
+                height={42}
+              />
             </div>
             <span className={styles.logoText}>stratyix</span>
           </Link>

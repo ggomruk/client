@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Mail,
   Lock,
@@ -122,8 +123,14 @@ export default function SignupPage() {
         <div className="hidden md:flex flex-col justify-center space-y-8 p-8">
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                <TrendingUp className="w-7 h-7 text-white" />
+              <div className="flex items-center justify-center">
+                <Image 
+                  src="/logo/logo_256_256.svg" 
+                  alt="Stratyix Logo" 
+                  width={80} 
+                  height={80}
+                  className="w-20 h-20"
+                />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-[#fafafa]">stratyix</h1>
