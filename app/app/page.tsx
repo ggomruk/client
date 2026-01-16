@@ -7,8 +7,9 @@ import { binanceService, TickerData } from './_api/binance.service';
 import { backtestService } from './_api/backtest.service';
 import { optimizerService } from './_api/optimizer.service';
 import { onchainService } from './_api/onchain.service';
-import { Wallet, TrendingUp, Activity, PieChart, ArrowUpRight, ArrowDownRight, Plus, Cpu, Fish } from 'lucide-react';
+import { Wallet, TrendingUp, Activity, PieChart, ArrowUpRight, ArrowDownRight, Plus, Cpu, Fish, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface MarketData {
   symbol: string;
@@ -26,10 +27,24 @@ interface QuickStat {
 }
 
 const PAIRS = [
-  { symbol: 'BTCUSDT', name: 'Bitcoin', subtitle: 'BTC/USDT', iconColor: 'text-orange-500', iconBg: 'bg-gradient-to-br from-orange-500/20 to-orange-600/20', chartColor: '#f97316' },
-  { symbol: 'ETHUSDT', name: 'Ethereum', subtitle: 'ETH/USDT', iconColor: 'text-purple-500', iconBg: 'bg-gradient-to-br from-purple-500/20 to-purple-600/20', chartColor: '#7c3aed' },
-  { symbol: 'BNBUSDT', name: 'BNB Chain', subtitle: 'BNB/USDT', iconColor: 'text-yellow-500', iconBg: 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/20', chartColor: '#eab308' },
-  { symbol: 'SOLUSDT', name: 'Solana', subtitle: 'SOL/USDT', iconColor: 'text-teal-500', iconBg: 'bg-gradient-to-br from-teal-500/20 to-teal-600/20', chartColor: '#14b8a6' },
+  { symbol: 'BTCUSDT', name: 'Bitcoin', subtitle: 'BTC/USDT', iconColor: 'text-orange-500', icon: 'images/btc.svg', iconBg: 'bg-gradient-to-br from-orange-500/20 to-orange-600/20', chartColor: '#f97316' },
+  { symbol: 'ETHUSDT', name: 'Ethereum', subtitle: 'ETH/USDT', iconColor: 'text-purple-500', icon: 'images/eth.svg', iconBg: 'bg-gradient-to-br from-purple-500/20 to-purple-600/20', chartColor: '#7c3aed' },
+  { symbol: 'BNBUSDT', name: 'BNB Chain', subtitle: 'BNB/USDT', iconColor: 'text-yellow-500', icon: 'images/bnb.svg', iconBg: 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/20', chartColor: '#eab308' },
+  { symbol: 'SOLUSDT', name: 'Solana', subtitle: 'SOL/USDT', iconColor: 'text-teal-500', icon: 'images/sol.svg', iconBg: 'bg-gradient-to-br from-teal-500/20 to-teal-600/20', chartColor: '#14b8a6' },
+];
+
+const ALL_PAIRS = [
+  { symbol: 'BTCUSDT', name: 'Bitcoin', subtitle: 'BTC/USDT', icon: 'images/btc.svg', iconBg: 'bg-gradient-to-br from-orange-500/20 to-orange-600/20', chartColor: '#f97316' },
+  { symbol: 'ETHUSDT', name: 'Ethereum', subtitle: 'ETH/USDT', icon: 'images/eth.svg', iconBg: 'bg-gradient-to-br from-purple-500/20 to-purple-600/20', chartColor: '#7c3aed' },
+  { symbol: 'BNBUSDT', name: 'BNB Chain', subtitle: 'BNB/USDT', icon: 'images/bnb.svg', iconBg: 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/20', chartColor: '#eab308' },
+  { symbol: 'SOLUSDT', name: 'Solana', subtitle: 'SOL/USDT', icon: 'images/sol.svg', iconBg: 'bg-gradient-to-br from-teal-500/20 to-teal-600/20', chartColor: '#14b8a6' },
+  { symbol: 'XRPUSDT', name: 'XRP', subtitle: 'XRP/USDT', icon: 'images/xrp.svg', iconBg: 'bg-gradient-to-br from-gray-500/20 to-gray-600/20', chartColor: '#6b7280' },
+  { symbol: 'ADAUSDT', name: 'Cardano', subtitle: 'ADA/USDT', icon: 'images/ada.svg', iconBg: 'bg-gradient-to-br from-blue-500/20 to-blue-600/20', chartColor: '#3b82f6' },
+  { symbol: 'DOGEUSDT', name: 'Dogecoin', subtitle: 'DOGE/USDT', icon: 'images/doge.svg', iconBg: 'bg-gradient-to-br from-amber-500/20 to-amber-600/20', chartColor: '#f59e0b' },
+  { symbol: 'AVAXUSDT', name: 'Avalanche', subtitle: 'AVAX/USDT', icon: 'images/avax.svg', iconBg: 'bg-gradient-to-br from-red-500/20 to-red-600/20', chartColor: '#ef4444' },
+  { symbol: 'SHIBUSDT', name: 'Shiba Inu', subtitle: 'SHIB/USDT', icon: 'images/shib.svg', iconBg: 'bg-gradient-to-br from-orange-400/20 to-orange-500/20', chartColor: '#fb923c' },
+  { symbol: 'LINKUSDT', name: 'Chainlink', subtitle: 'LINK/USDT', icon: 'images/link.svg', iconBg: 'bg-gradient-to-br from-blue-400/20 to-blue-500/20', chartColor: '#60a5fa' },
+  { symbol: 'TRXUSDT', name: 'TRON', subtitle: 'TRX/USDT', icon: 'images/trx.svg', iconBg: 'bg-gradient-to-br from-red-400/20 to-red-500/20', chartColor: '#f87171' },
 ];
 
 const AppPage = () => {
@@ -43,6 +58,8 @@ const AppPage = () => {
     ]);
 
     const [recentBacktest, setRecentBacktest] = useState<any>(null);
+    const [showAllPairs, setShowAllPairs] = useState(false);
+    const [allPairsData, setAllPairsData] = useState<Record<string, MarketData>>({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -174,6 +191,34 @@ const AppPage = () => {
         return (v / 1e3).toFixed(2) + 'K';
     };
 
+    // Fetch all pairs data when modal opens
+    useEffect(() => {
+        if (!showAllPairs) return;
+        
+        const fetchAllPairs = async () => {
+            try {
+                const promises = ALL_PAIRS.map(async (pair) => {
+                    const [ticker, klines] = await Promise.all([
+                        binanceService.get24hrTicker(pair.symbol),
+                        binanceService.getKlines(pair.symbol)
+                    ]);
+                    return { symbol: pair.symbol, ticker, klines };
+                });
+
+                const results = await Promise.all(promises);
+                const dataMap = results.reduce((acc, item) => {
+                    acc[item.symbol] = item;
+                    return acc;
+                }, {} as Record<string, MarketData>);
+                setAllPairsData(dataMap);
+            } catch (error) {
+                console.error("Failed to fetch all pairs data", error);
+            }
+        };
+
+        fetchAllPairs();
+    }, [showAllPairs]);
+
     return (
         <div className="flex-1 bg-[#09090b] overflow-y-auto relative p-4 md:p-6 lg:p-8">
             {/* Floating Particles Background */}
@@ -238,7 +283,10 @@ const AppPage = () => {
                         <h2 className="text-xl font-bold text-[#fafafa]">
                             Top Trading Pairs
                         </h2>
-                        <button className="text-sm text-[#06b6d4] hover:text-[#7c3aed] transition-colors font-medium">
+                        <button 
+                            onClick={() => setShowAllPairs(true)}
+                            className="text-sm text-[#06b6d4] hover:text-[#7c3aed] transition-colors font-medium"
+                        >
                             View All
                         </button>
                     </div>
@@ -260,7 +308,15 @@ const AppPage = () => {
                                         percentageChange={change}
                                         isPositive={isPositive}
                                         currentValue={`Vol: $${volume}`}
-                                        icon={<span className={`${pair.iconColor} font-bold text-lg`}>◆</span>}
+                                        icon={
+                                            <Image 
+                                                src={`/${pair.icon}`} 
+                                                alt={pair.name}
+                                                width={24}
+                                                height={24}
+                                                className="w-6 h-6"
+                                            />
+                                        }
                                         iconBg={pair.iconBg}
                                         chartData={chartData}
                                         chartColor={pair.chartColor}
@@ -275,6 +331,74 @@ const AppPage = () => {
                 {/* Active Strategy Analysis - includes backtest functionality */}
                 <ActiveStaking recentBacktest={recentBacktest} />
             </div>
+
+            {/* All Pairs Modal */}
+            {showAllPairs && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div 
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        onClick={() => setShowAllPairs(false)}
+                    />
+                    
+                    {/* Modal Content */}
+                    <div className="relative bg-[#18181b] rounded-2xl border border-[#27272a] w-full max-w-6xl max-h-[85vh] overflow-hidden animate-fadeIn">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-[#27272a]">
+                            <h2 className="text-2xl font-bold text-white">All Trading Pairs</h2>
+                            <button 
+                                onClick={() => setShowAllPairs(false)}
+                                className="p-2 rounded-lg hover:bg-[#27272a] transition-colors"
+                            >
+                                <X className="w-6 h-6 text-[#a1a1aa]" />
+                            </button>
+                        </div>
+                        
+                        {/* Grid */}
+                        <div className="p-6 overflow-y-auto max-h-[calc(85vh-88px)]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                {ALL_PAIRS.map((pair, index) => {
+                                    const data = allPairsData[pair.symbol] || marketData[pair.symbol];
+                                    const price = data ? formatPrice(data.ticker.lastPrice) : 'Loading...';
+                                    const change = data ? parseFloat(data.ticker.priceChangePercent).toFixed(2) + '%' : '0.00%';
+                                    const isPositive = data ? parseFloat(data.ticker.priceChangePercent) >= 0 : true;
+                                    const volume = data ? formatVolume(data.ticker.quoteVolume) : '0';
+                                    const chartData = data ? data.klines : [];
+
+                                    return (
+                                        <div 
+                                            key={pair.symbol} 
+                                            style={{ animation: `scale-in 0.3s ease-out ${index * 0.05}s both` }}
+                                        >
+                                            <StakingAssetCard
+                                                name={pair.name}
+                                                subtitle={pair.subtitle}
+                                                percentage={price}
+                                                percentageChange={change}
+                                                isPositive={isPositive}
+                                                currentValue={`Vol: $${volume}`}
+                                                icon={
+                                                    <Image 
+                                                        src={`/${pair.icon}`} 
+                                                        alt={pair.name}
+                                                        width={24}
+                                                        height={24}
+                                                        className="w-6 h-6"
+                                                    />
+                                                }
+                                                iconBg={pair.iconBg}
+                                                chartData={chartData}
+                                                chartColor={pair.chartColor}
+                                                label="Price"
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
