@@ -4,12 +4,25 @@ import React, { useEffect, useState } from 'react'
 import { StakingAssetCard } from './_components/StakingAssetCard'
 import { ActiveStaking } from './_components/ActiveStaking'
 import { binanceService, TickerData } from './_api/binance.service';
-import { Wallet, TrendingUp, Activity, PieChart, ArrowUpRight, ArrowDownRight, Plus } from 'lucide-react';
+import { backtestService } from './_api/backtest.service';
+import { optimizerService } from './_api/optimizer.service';
+import { onchainService } from './_api/onchain.service';
+import { Wallet, TrendingUp, Activity, PieChart, ArrowUpRight, ArrowDownRight, Plus, Cpu, Fish } from 'lucide-react';
+import Link from 'next/link';
 
 interface MarketData {
   symbol: string;
   ticker: TickerData;
   klines: number[];
+}
+
+interface QuickStat {
+    label: string;
+    value: string;
+    change: string;
+    isPositive: boolean;
+    icon: any;
+    color: string;
 }
 
 const PAIRS = [
@@ -19,20 +32,22 @@ const PAIRS = [
   { symbol: 'SOLUSDT', name: 'Solana', subtitle: 'SOL/USDT', iconColor: 'text-teal-500', iconBg: 'bg-gradient-to-br from-teal-500/20 to-teal-600/20', chartColor: '#14b8a6' },
 ];
 
-const quickStats = [
-  { label: "Portfolio Value", value: "$48,532.00", change: "+12.5%", isPositive: true, icon: Wallet, color: "from-[#7c3aed] to-[#a855f7]" },
-  { label: "Today's P&L", value: "+$1,234.56", change: "+2.6%", isPositive: true, icon: TrendingUp, color: "from-[#10b981] to-[#22c55e]" },
-  { label: "Active Strategies", value: "8", change: "2 new", isPositive: true, icon: Activity, color: "from-[#06b6d4] to-[#0ea5e9]" },
-  { label: "Win Rate", value: "67.8%", change: "+5.2%", isPositive: true, icon: PieChart, color: "from-[#ec4899] to-[#f472b6]" },
-];
-
 const AppPage = () => {
     const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
     const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState<QuickStat[]>([
+        { label: "Market Sentiment", value: "Loading...", change: "--", isPositive: true, icon: TrendingUp, color: "from-[#10b981] to-[#22c55e]" },
+        { label: "Backtests Run", value: "0", change: "Last: --", isPositive: true, icon: Activity, color: "from-[#7c3aed] to-[#a855f7]" },
+        { label: "Optimizations", value: "0", change: "Idle", isPositive: true, icon: Cpu, color: "from-[#ec4899] to-[#f472b6]" },
+        { label: "Whale Activity", value: "0", change: "24h Count", isPositive: true, icon: Fish, color: "from-[#06b6d4] to-[#0ea5e9]" },
+    ]);
+
+    const [recentBacktest, setRecentBacktest] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // 1. Fetch Market Data (Pairs)
                 const promises = PAIRS.map(async (pair) => {
                     const [ticker, klines] = await Promise.all([
                         binanceService.get24hrTicker(pair.symbol),
@@ -46,18 +61,103 @@ const AppPage = () => {
                     acc[item.symbol] = item;
                     return acc;
                 }, {} as Record<string, MarketData>);
-
                 setMarketData(dataMap);
+
+                // 2. Derive Market Sentiment
+                const positivePairs = results.filter(r => parseFloat(r.ticker.priceChangePercent) > 0).length;
+                const sentimentValue = positivePairs >= results.length / 2 ? "Bullish" : "Bearish";
+                const sentimentChange = `${positivePairs}/${results.length} Up`;
+
+                // 3. Fetch User Stats (Parallel)
+                const [backtests, optimizations, whaleTx] = await Promise.allSettled([
+                    backtestService.getHistory(),
+                    optimizerService.getOptimizations(),
+                    onchainService.getTransactions({ limit: 1 })
+                ]);
+                
+                // Process Backtests
+                let totalBacktests = "0";
+                let lastBacktestInfo = "No runs";
+                let backtestPositive = true;
+                
+                if (backtests.status === 'fulfilled' && Array.isArray(backtests.value)) {
+                    totalBacktests = backtests.value.length.toString();
+                    if (backtests.value.length > 0) {
+                        const last = backtests.value[0]; // Assuming sorted descending
+                        setRecentBacktest(last); // Store for ActiveStaking
+                        
+                        // Try to extract return from summary or result
+                        const ret = (last as any).result?.totalReturn || (last as any).summary?.totalReturn || 0;
+                        lastBacktestInfo = `Last: ${ret > 0 ? '+' : ''}${parseFloat(ret).toFixed(2)}%`;
+                        backtestPositive = ret >= 0;
+                    }
+                }
+
+                // Process Optimizations
+                let totalOpts = "0";
+                let optStatus = "No jobs";
+                if (optimizations.status === 'fulfilled') {
+                    // optimizerService might return wrapped payload. Handle both.
+                    const payload: any = optimizations.value; 
+                    const list = Array.isArray(payload) ? payload : (payload.payload || []);
+                    totalOpts = list.length.toString();
+                    if (list.length > 0) {
+                        const last = list[list.length - 1]; // Assuming append order or check date
+                        optStatus = last.status || "Unknown";
+                    }
+                }
+
+                // // Process OnChain
+                // let whaleCount = "0";
+                // if (whaleTx.status === 'fulfilled') {
+                //     // Response is PaginatedTransactionsResponse
+                //     whaleCount = whaleTx.value.pagination?.total?.toString() || "0";
+                // }
+
+                setStats([
+                    { 
+                        label: "Market Sentiment", 
+                        value: sentimentValue, 
+                        change: sentimentChange, 
+                        isPositive: sentimentValue === "Bullish", 
+                        icon: TrendingUp, 
+                        color: "from-[#10b981] to-[#22c55e]" 
+                    },
+                    { 
+                        label: "Your Backtests", 
+                        value: totalBacktests, 
+                        change: lastBacktestInfo, 
+                        isPositive: backtestPositive, 
+                        icon: Activity, 
+                        color: "from-[#7c3aed] to-[#a855f7]" 
+                    },
+                    { 
+                        label: "Your Optimizations", 
+                        value: totalOpts, 
+                        change: optStatus, 
+                        isPositive: true, 
+                        icon: Cpu, 
+                        color: "from-[#ec4899] to-[#f472b6]" 
+                    },
+                    // { 
+                    //     label: "Whale Activity", 
+                    //     value: whaleCount, 
+                    //     change: "24h Txs", 
+                    //     isPositive: true, 
+                    //     icon: Fish, 
+                    //     color: "from-[#06b6d4] to-[#0ea5e9]" 
+                    // },
+                ]);
+
             } catch (error) {
-                console.error("Failed to fetch market data", error);
+                console.error("Failed to fetch dashboard data", error);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchData();
-        // Optional: Set up interval for polling
-        const interval = setInterval(fetchData, 10000); // 10 seconds
+        const interval = setInterval(fetchData, 30000); // 30 seconds poll
         return () => clearInterval(interval);
     }, []);
 
@@ -94,9 +194,12 @@ const AppPage = () => {
                     <div className="flex items-center justify-between mb-4">
                         <div className="animate-fadeIn">
                             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
-                                Good Morning 👋
+                                {
+                                    new Date().getHours() < 12 ? 'Good Morning👋' :
+                                    new Date().getHours() < 18 ? 'Good Afternoon👋' :
+                                    'Good Evening👋'
+                                }
                             </h1>
-                            <p className="text-sm md:text-base text-[#a1a1aa]">Here&apos;s your portfolio summary</p>
                         </div>
                         <button className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
                             <Plus className="w-6 h-6 text-white" />
@@ -106,7 +209,7 @@ const AppPage = () => {
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    {quickStats.map((stat, index) => {
+                    {stats.map((stat, index) => {
                         const Icon = stat.icon;
                         return (
                             <div
@@ -173,7 +276,7 @@ const AppPage = () => {
                 </div>
 
                 {/* Active Strategy Analysis - includes backtest functionality */}
-                <ActiveStaking />
+                <ActiveStaking recentBacktest={recentBacktest} />
             </div>
         </div>
     )

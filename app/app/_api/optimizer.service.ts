@@ -88,7 +88,13 @@ class OptimizerService {
     );
     return response.data;
   }
-
+  async getOptimizations(): Promise<OptimizationResult[]> {
+    const response = await axios.get(
+      `${API_BASE_URL}/optimizer/optimizations`,
+      this.getAuthHeader()
+    );
+    return response.data;
+  }
   async compareStrategies(dto: CompareStrategiesDTO): Promise<any> {
     const response = await axios.post(
       `${API_BASE_URL}/optimizer/compare`,
