@@ -22,6 +22,8 @@ export default function StrategyBuilder() {
     runBacktest,
     isRunning,
     error,
+    result,
+    clearResults,
     isSelectingDate,
     toggleSelectionMode,
   } = useBacktest();
@@ -30,8 +32,16 @@ export default function StrategyBuilder() {
   const steps = [
     { id: 1, title: "Strategy" },
     { id: 2, title: "Parameters" },
-    { id: 3, title: "Simulation" }
+    { id: 3, title: "Simulation" },
+    { id: 4, title: "Results" }
   ];
+
+  // Auto-advance to step 4 when result arrives
+  useEffect(() => {
+    if (result && currentStep === 3) {
+      setCurrentStep(4);
+    }
+  }, [result, currentStep]);
 
   const validationError = useMemo(() => {
     if (!selectedStrategy) return null;
@@ -168,7 +178,12 @@ export default function StrategyBuilder() {
                   ))}
                 </div>
             </div>
-            
+          </div>
+        )}
+
+        {/* Step 2: Parameters */}
+        {currentStep === 2 && (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             {currentStrategy?.requirements && (
                 <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl">
                     <p className="text-[10px] font-semibold text-blue-400 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
@@ -180,12 +195,7 @@ export default function StrategyBuilder() {
                     </p>
                 </div>
             )}
-          </div>
-        )}
-
-        {/* Step 2: Parameters */}
-        {currentStep === 2 && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+            
              <div className="flex items-center justify-between">
                 <h4 className="text-sm font-medium text-text-primary">
                     Fine-tune {selectedStrategy}
@@ -350,11 +360,18 @@ export default function StrategyBuilder() {
           </div>
         )}
 
+        {/* Step 4: Results */}
+        {currentStep === 4 && (
+          <div className="animate-in slide-in-from-right-4 duration-300">
+            <BacktestResults />
+          </div>
+        )}
+
       </div>
 
       {/* Footer Navigation */}
       <div className="p-4 border-t border-[#3f3f46] bg-[#18181b] flex-shrink-0 flex gap-3">
-         {currentStep > 1 && (
+         {currentStep > 1 && currentStep < 4 && (
             <button 
                 onClick={() => setCurrentStep(prev => prev - 1)}
                 className="px-4 py-2 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-text-secondary hover:text-white text-xs font-medium transition-colors flex items-center gap-1"
@@ -371,7 +388,7 @@ export default function StrategyBuilder() {
             >
                 Next Step <ChevronRight size={14} />
             </button>
-         ) : (
+         ) : currentStep === 3 ? (
             <button
                 onClick={runBacktest}
                 disabled={isRunning || !!validationError}
@@ -389,16 +406,20 @@ export default function StrategyBuilder() {
                     </>
                 )}
             </button>
+         ) : (
+            <button
+                onClick={() => {
+                    clearResults();
+                    setCurrentStep(1);
+                }}
+                className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] hover:opacity-90 text-white text-xs font-semibold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
+            >
+                <Play className="w-3.5 h-3.5" />
+                <span>New Simulation</span>
+            </button>
          )}
       </div>
 
-      {/* Backtest Results - Sticky at bottom only if result exists
-          )}
-        </button>
-      </div>
-
-      {/* Backtest Results Summary - Separate Section */}
-      <BacktestResults />
     </div>
   );
 }

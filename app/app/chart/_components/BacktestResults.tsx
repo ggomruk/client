@@ -69,12 +69,6 @@ Leverage,${result.leverageApplied}x`;
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <h3 className="text-sm font-medium">Backtest Results</h3>
           </div>
-          <button 
-            onClick={clearResults}
-            className="text-[#a1a1aa] hover:text-[#fafafa] transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Metrics */}
