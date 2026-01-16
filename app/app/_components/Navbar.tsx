@@ -44,7 +44,7 @@ const Navbar = () => {
                 height={42}
               />
             </div>
-            <span className={styles.logoText}>stratyix</span>
+            <span className={styles.logoText}>Stratyix</span>
           </Link>
         </div>
 

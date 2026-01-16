@@ -361,3 +361,64 @@
 .hover-glow:hover {
   box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
 }
+
+/* Strategy Selection Border Animation - SVG-based split border from top center */
+.strategy-card-wrapper {
+  position: relative;
+}
+
+.strategy-card-wrapper .border-svg {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  pointer-events: none;
+  z-index: 10;
+  overflow: visible;
+}
+
+.strategy-card-wrapper .border-path-right,
+.strategy-card-wrapper .border-path-left {
+  /* Initial state: dasharray 1 means full length (due to pathLength=1), offset 1 means fully hidden */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.strategy-card-wrapper.selected .border-path-right,
+.strategy-card-wrapper.selected .border-path-left {
+  animation: drawPathNormalized 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes drawPathNormalized {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Glow effect for selected strategy */
+.strategy-card-wrapper.selected::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  /* background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%); REMOVE FILL */
+  z-index: -1;
+  /* Instead of background, we just use box-shadow for outer glow */
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.1); 
+  animation: glowPulseStrategy 2s ease-in-out infinite;
+}
+
+@keyframes glowPulseStrategy {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.1);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+  }
+}
+

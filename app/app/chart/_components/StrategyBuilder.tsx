@@ -9,6 +9,134 @@ import BacktestResults from './BacktestResults';
 import { strategyList } from '../../_constants/strategy';
 import { Strategy, StrategyParam } from '../../_types/startegy';
 
+// Sub-component for individual strategy card with resize-aware SVG border
+const StrategyCard = ({ 
+  strategy, 
+  isSelected, 
+  onSelect 
+}: { 
+  strategy: Strategy; 
+  isSelected: boolean; 
+  onSelect: () => void;
+}) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Initial measure
+    setDimensions({
+      width: containerRef.current.offsetWidth,
+      height: containerRef.current.offsetHeight
+    });
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        });
+      }
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []); // Only setup once
+
+  // Calculate paths
+  const r = 12; // Radius
+  const gap = 0; // Bottom gap size (0 for closed border)
+  const w = dimensions.width;
+  const h = dimensions.height;
+  
+  // Only calculate if we have dimensions
+  const paths = useMemo(() => {
+    if (w === 0 || h === 0) return { right: '', left: '' };
+    
+    const centerX = w / 2;
+    // Right Path: Start Top Center -> Line Right -> Arc TR -> Line Down -> Arc BR -> Line Left (Stop before center)
+    const rightPath = `
+      M ${centerX} 1
+      L ${w - r} 1
+      A ${r} ${r} 0 0 1 ${w - 1} ${r}
+      L ${w - 1} ${h - r}
+      A ${r} ${r} 0 0 1 ${w - r} ${h - 1}
+      L ${centerX + gap} ${h - 1}
+    `.replace(/\s+/g, ' ');
+
+    // Left Path: Start Top Center -> Line Left -> Arc TL -> Line Down -> Arc BL -> Line Right (Stop before center)
+    const leftPath = `
+      M ${centerX} 1
+      L ${r} 1
+      A ${r} ${r} 0 0 0 1 ${r}
+      L 1 ${h - r}
+      A ${r} ${r} 0 0 0 ${r} ${h - 1}
+      L ${centerX - gap} ${h - 1}
+    `.replace(/\s+/g, ' ');
+
+    return { right: rightPath, left: leftPath };
+  }, [w, h]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative strategy-card-wrapper ${isSelected ? 'selected' : ''}`}
+    >
+      {isSelected && w > 0 && (
+        <svg 
+          className="absolute inset-0 pointer-events-none z-10" 
+          width="100%" 
+          height="100%"
+          style={{ overflow: 'visible' }}
+        >
+          <defs>
+            <linearGradient id={`gradient-${strategy.symbol}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#a78bfa" />
+              <stop offset="100%" stopColor="#22d3ee" />
+            </linearGradient>
+          </defs>
+          <path
+            className="border-path-right"
+            d={paths.right}
+            stroke={`url(#gradient-${strategy.symbol})`}
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+            pathLength="1"
+          />
+          <path
+            className="border-path-left"
+            d={paths.left}
+            stroke={`url(#gradient-${strategy.symbol})`}
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+            pathLength="1"
+          />
+        </svg>
+      )}
+      <button
+        onClick={onSelect}
+        className={`relative w-full p-3 rounded-xl text-left transition-all border group ${
+          isSelected
+            ? 'bg-[#27272a] border-transparent'
+            : 'bg-[#27272a] border-[#3f3f46] hover:border-[#71717a]'
+        }`}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <span className={`text-sm font-semibold ${
+            isSelected ? 'text-[#7c3aed]' : 'text-text-primary group-hover:text-white'
+          }`}>
+            {strategy.symbol}
+          </span>
+          {isSelected && <CheckCircle2 size={14} className="text-[#7c3aed]" />}
+        </div>
+      </button>
+    </div>
+  );
+};
+
 export default function StrategyBuilder() {
   const { symbol, interval } = useWebsocket();
   const { showIndicators, panelStack, updatePanelStack } = usePanel();
@@ -157,24 +285,12 @@ export default function StrategyBuilder() {
                 </label>
                 <div className="grid grid-cols-1 gap-2.5">
                   {strategyList.map((strategy: Strategy) => (
-                    <button
+                    <StrategyCard
                       key={strategy.symbol}
-                      onClick={() => setSelectedStrategy(strategy.symbol)}
-                      className={`relative p-3 rounded-xl text-left transition-all border group ${
-                        selectedStrategy === strategy.symbol
-                          ? 'bg-[#7c3aed]/10 border-[#7c3aed] shadow-[0_0_15px_rgba(124,58,237,0.1)]'
-                          : 'bg-[#27272a] border-[#3f3f46] hover:border-[#71717a]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                          <span className={`text-sm font-semibold ${
-                              selectedStrategy === strategy.symbol ? 'text-[#7c3aed]' : 'text-text-primary group-hover:text-white'
-                          }`}>
-                              {strategy.symbol}
-                          </span>
-                          {selectedStrategy === strategy.symbol && <CheckCircle2 size={14} className="text-[#7c3aed]" />}
-                      </div>
-                    </button>
+                      strategy={strategy}
+                      isSelected={selectedStrategy === strategy.symbol}
+                      onSelect={() => setSelectedStrategy(strategy.symbol)}
+                    />
                   ))}
                 </div>
             </div>
