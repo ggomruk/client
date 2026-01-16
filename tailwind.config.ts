@@ -20,6 +20,9 @@ const config: Config = {
         "4xl": "36px",
         "5xl": "48px",
       },
+      fontFamily: {
+        sans: ["var(--font-urbanist)", "sans-serif"],
+      },
       colors: {
         // Legacy variables (keep for backwards compatibility)
         background: "var(--background)",
