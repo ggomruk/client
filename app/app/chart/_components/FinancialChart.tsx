@@ -1058,14 +1058,25 @@ const FinancialChart = () => {
                     <div
                         className="absolute px-3 py-2 rounded-lg text-xs font-medium tabular-nums pointer-events-none shadow-xl"
                         style={{
-                            left: `${cursorPosition.x + 15}px`,
+                            left: (() => {
+                                const containerWidth = chartContainerRef.current?.clientWidth || 0;
+                                const tooltipWidth = 200; // Min width defined below
+                                const margin = 15;
+                                const x = cursorPosition.x;
+                                
+                                // Check if tooltip would overflow right edge
+                                if (x + margin + tooltipWidth > containerWidth) {
+                                    return `${x - tooltipWidth - margin}px`;
+                                }
+                                return `${x + margin}px`;
+                            })(),
                             top: `${cursorPosition.y + 15}px`,
                             background: 'rgba(24,24,27,0.95)',
                             color: 'var(--text-primary)',
                             border: '1px solid rgba(63,63,70,0.9)',
                             backdropFilter: 'blur(8px)',
                             WebkitBackdropFilter: 'blur(8px)',
-                            zIndex: 100,
+                            zIndex: 50,
                             minWidth: '200px',
                         }}
                     >
