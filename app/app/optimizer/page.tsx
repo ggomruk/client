@@ -16,7 +16,7 @@ import {
 } from "../_components/ui/dialog";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useServerWebsocket } from "@/app/app/_provider/server.websocket";
-import { toast } from "sonner";
+import { useToast } from "../_contexts/ToastContext";
 import axiosInstance from "../_api/axios";
 import { OptimizationHistory } from "./_components/OptimizationHistory";
 import { PageNotReady } from "../_components/PageNotReady";
@@ -101,6 +101,7 @@ export default function OptimizerPage() {
   // All hooks must be called unconditionally at the top
   const { user, token } = useAuth();
   const { socket } = useServerWebsocket();
+  const { success, error, info } = useToast();
   
   const [symbol, setSymbol] = useState("");
   const [timeInterval, setTimeInterval] = useState("");
@@ -195,7 +196,7 @@ export default function OptimizerPage() {
               resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
           }
-          toast.success("Optimization completed successfully!");
+          success("Optimization completed successfully!");
         }
       }
     };
@@ -259,14 +260,14 @@ export default function OptimizerPage() {
 
   const startOptimization = async () => {
     if (!symbol || !timeInterval || !startDate || !endDate) {
-      toast.error("Please fill in all required fields");
+      error("Please fill in all required fields");
       return;
     }
 
     // Validate strategies
     const invalidStrategies = strategiesConfig.filter(s => !s.type || s.parameters.length === 0);
     if (invalidStrategies.length > 0) {
-      toast.error("Please configure all strategies with at least one parameter range");
+      error("Please configure all strategies with at least one parameter range");
       return;
     }
 
@@ -303,12 +304,12 @@ export default function OptimizerPage() {
 
       if (response.data && response.data.optimizationId) {
         setOptimizationId(response.data.optimizationId);
-        toast.info("Optimization started...");
+        info("Optimization started...");
       }
 
-    } catch (error) {
-      console.error("Optimization failed:", error);
-      toast.error("Failed to start optimization");
+    } catch (err) {
+      console.error("Optimization failed:", err);
+      error("Failed to start optimization");
       setIsOptimizing(false);
     }
   };
@@ -316,27 +317,27 @@ export default function OptimizerPage() {
   const handleLoadResult = (data: any) => {
     setBestResult(data.best);
     setResults(data.all);
-    toast.success("Loaded optimization results");
+    success("Loaded optimization results");
   };
 
   // Maintenance mode early return (after all hooks are called)
-  if (IS_MAINTENANCE_MODE) {
-    return (
-      <div className="h-full flex items-center justify-center p-6">
-        <PageNotReady 
-          title="AI Strategy Optimizer"
-          description="We're upgrading our optimization engine to support genetic algorithms and walk-forward analysis. This module will be back shortly with enhanced capabilities."
-          features={[
-            "Genetic Algorithm Engine",
-            "Walk-Forward Analysis", 
-            "Multi-Strategy Combination",
-            "Performance Heatmaps"
-          ]}
-          estimatedTime="24 hours"
-        />
-      </div>
-    );
-  }
+  // if (IS_MAINTENANCE_MODE) {
+  //   return (
+  //     <div className="h-full flex items-center justify-center p-6">
+  //       <PageNotReady 
+  //         title="AI Strategy Optimizer"
+  //         description="We're upgrading our optimization engine to support genetic algorithms and walk-forward analysis. This module will be back shortly with enhanced capabilities."
+  //         features={[
+  //           "Genetic Algorithm Engine",
+  //           "Walk-Forward Analysis", 
+  //           "Multi-Strategy Combination",
+  //           "Performance Heatmaps"
+  //         ]}
+  //         estimatedTime="24 hours"
+  //       />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="overflow-y-auto py-8 px-12 lg:px-16 xl:px-20 relative">
@@ -568,7 +569,15 @@ export default function OptimizerPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {config.parameters.map((param, paramIndex) => (
+                      {config.parameters.map((param, paramIndex) => {
+                        // Filter out already selected parameters, but keep the current one
+                        const selectedParamNames = config.parameters.map(p => p.name);
+                        const allOptions = strategyParameters[config.type] || [];
+                        const availableOptions = allOptions.filter(
+                          opt => opt.value === param.name || !selectedParamNames.includes(opt.value)
+                        );
+
+                        return (
                         <div 
                           key={paramIndex} 
                           className="glass rounded-lg p-4 animate-slideIn relative"
@@ -577,7 +586,7 @@ export default function OptimizerPage() {
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <Select
                               label="Parameter"
-                              options={strategyParameters[config.type] || []}
+                              options={availableOptions}
                               value={param.name}
                               onChange={(value) => updateParameter(config.id, paramIndex, "name", value)}
                             />
@@ -609,7 +618,7 @@ export default function OptimizerPage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )})}
                       {config.parameters.length === 0 && (
                         <div className="text-center p-4 text-sm text-[#a1a1aa] italic">
                           No parameters added. Click &quot;Add Parameter&quot; to start.
@@ -650,7 +659,6 @@ export default function OptimizerPage() {
                 </div>
               </div>
             </div>
-            <p className="text-xs text-[#a1a1aa]">~{Math.ceil((100 - progress) * 0.05)} seconds remaining</p>
           </Card>
         )}
 

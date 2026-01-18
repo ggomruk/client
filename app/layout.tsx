@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import './globals.css';
 import { AuthProvider } from "./contexts/AuthContext";
 import ErrorBoundary from "./app/_components/ErrorBoundary";
+import { Toaster } from "./app/_components/ui/sonner";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             {children}
+            <Toaster />
           </AuthProvider>
         </ErrorBoundary>
       </body>
