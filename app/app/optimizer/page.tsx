@@ -321,23 +321,23 @@ export default function OptimizerPage() {
   };
 
   // Maintenance mode early return (after all hooks are called)
-  // if (IS_MAINTENANCE_MODE) {
-  //   return (
-  //     <div className="h-full flex items-center justify-center p-6">
-  //       <PageNotReady 
-  //         title="AI Strategy Optimizer"
-  //         description="We're upgrading our optimization engine to support genetic algorithms and walk-forward analysis. This module will be back shortly with enhanced capabilities."
-  //         features={[
-  //           "Genetic Algorithm Engine",
-  //           "Walk-Forward Analysis", 
-  //           "Multi-Strategy Combination",
-  //           "Performance Heatmaps"
-  //         ]}
-  //         estimatedTime="24 hours"
-  //       />
-  //     </div>
-  //   );
-  // }
+  if (IS_MAINTENANCE_MODE) {
+    return (
+      <div className="h-full flex items-center justify-center p-6">
+        <PageNotReady 
+          title="AI Strategy Optimizer"
+          description="We're upgrading our optimization engine to support genetic algorithms and walk-forward analysis. This module will be back shortly with enhanced capabilities."
+          features={[
+            "Genetic Algorithm Engine",
+            "Walk-Forward Analysis", 
+            "Multi-Strategy Combination",
+            "Performance Heatmaps"
+          ]}
+          estimatedTime="24 hours"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-y-auto py-8 px-12 lg:px-16 xl:px-20 relative">
